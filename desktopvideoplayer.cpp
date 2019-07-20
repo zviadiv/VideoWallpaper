@@ -67,31 +67,31 @@ DesktopVideoPlayer::DesktopVideoPlayer(QObject *parent)
         SettingsManager::getInstance()->unregAutostart();
     QtAV::setFFmpegLogLevel("warn");
     QtAV::setLogLevel(QtAV::LogAll);
-    QtAV::VideoRenderer *renderer = QtAV::VideoRenderer::create(SettingsManager::getInstance()->getRenderer());
-    if (!renderer || !renderer->isAvailable() || !renderer->widget())
+    mRenderer = QtAV::VideoRenderer::create(SettingsManager::getInstance()->getRenderer());
+    if (!mRenderer || !mRenderer->isAvailable() || !mRenderer->widget())
     {
         QMessageBox::critical(nullptr, QStringLiteral("Video Wallpaper"), QObject::tr("Current renderer is not available on your platform!"));
         qApp->quit();
     }
-    const QtAV::VideoDecoderId vid = renderer->id();
+    const QtAV::VideoDecoderId vid = mRenderer->id();
     if (vid == QtAV::VideoRendererId_GLWidget
             || vid == QtAV::VideoRendererId_GLWidget2
             || vid == QtAV::VideoRendererId_OpenGLWidget)
-        renderer->forcePreferredPixelFormat(true);
+        mRenderer->forcePreferredPixelFormat(true);
     else
-        renderer->forcePreferredPixelFormat(false);
+        mRenderer->forcePreferredPixelFormat(false);
     QString videoQuality = SettingsManager::getInstance()->getVideoQuality();
     if (videoQuality == QStringLiteral("default"))
-        renderer->setQuality(QtAV::VideoRenderer::QualityDefault);
+        mRenderer->setQuality(QtAV::VideoRenderer::QualityDefault);
     else if (videoQuality == QStringLiteral("best"))
-        renderer->setQuality(QtAV::VideoRenderer::QualityBest);
+        mRenderer->setQuality(QtAV::VideoRenderer::QualityBest);
     else
-        renderer->setQuality(QtAV::VideoRenderer::QualityFastest);
+        mRenderer->setQuality(QtAV::VideoRenderer::QualityFastest);
     if (SettingsManager::getInstance()->getFitDesktop())
-        renderer->setOutAspectRatioMode(QtAV::VideoRenderer::RendererAspectRatio);
+        mRenderer->setOutAspectRatioMode(QtAV::VideoRenderer::RendererAspectRatio);
     else
-        renderer->setOutAspectRatioMode(QtAV::VideoRenderer::VideoAspectRatio);
-    QWidget *mainWindow = renderer->widget();
+        mRenderer->setOutAspectRatioMode(QtAV::VideoRenderer::VideoAspectRatio);
+    QWidget *mainWindow = mRenderer->widget();
     const Qt::WindowFlags rendererWindowFlags = Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint | Qt::WindowDoesNotAcceptFocus;
     const QRect screenGeometry = QApplication::desktop()->screenGeometry(mainWindow);
     if (!mWindowMode)
@@ -106,37 +106,37 @@ DesktopVideoPlayer::DesktopVideoPlayer(QObject *parent)
         moveToCenter(mainWindow);
     }
     mainWindow->setWindowIcon(QIcon(QStringLiteral(":/bee.ico")));
-    mainWindow->setWindowTitle(QStringLiteral("Dynamic Desktop"));
-    QtAV::AVPlayer player;
-    player.setRenderer(renderer);
+    mainWindow->setWindowTitle(QStringLiteral("Video Wallpaper"));
+    mPlayer = new QtAV::AVPlayer(this);
+    mPlayer->setRenderer(mRenderer);
     QtAV::SubtitleFilter subtitle;
-    subtitle.setPlayer(&player);
-    subtitle.installTo(renderer);
+    subtitle.setPlayer(mPlayer);
+    subtitle.installTo(mRenderer);
     subtitle.setCodec(SettingsManager::getInstance()->getCharset().toLatin1());
     subtitle.setEngines(QStringList() << QStringLiteral("LibASS") << QStringLiteral("FFmpeg"));
     subtitle.setAutoLoad(SettingsManager::getInstance()->getSubtitleAutoLoad());
     subtitle.setEnabled(SettingsManager::getInstance()->getSubtitle());
-    player.setRepeat(-1);
+    mPlayer->setRepeat(-1);
     PreferencesDialog preferencesDialog;
-    QObject::connect(&player, SIGNAL(positionChanged(qint64)), &preferencesDialog, SIGNAL(updateVideoSlider(qint64)));
-    QObject::connect(&player, &QtAV::AVPlayer::loaded,
-        [=, &preferencesDialog, &player, &subtitle]
+    QObject::connect(mPlayer, SIGNAL(positionChanged(qint64)), &preferencesDialog, SIGNAL(updateVideoSlider(qint64)));
+    QObject::connect(mPlayer, &QtAV::AVPlayer::loaded,
+        [=, &preferencesDialog, &subtitle]
         {
             preferencesDialog.clearAllTracks();
-            preferencesDialog.updateVideoSliderUnit(player.notifyInterval());
-            preferencesDialog.updateVideoSliderRange(player.duration());
-            preferencesDialog.updateVideoSlider(player.position());
-            preferencesDialog.setSeekAreaEnabled(player.isSeekable());
-            preferencesDialog.setAudioAreaEnabled(player.audio());
-            preferencesDialog.updateVideoTracks(player.internalVideoTracks());
-            preferencesDialog.updateAudioTracks(player.internalAudioTracks(), false);
+            preferencesDialog.updateVideoSliderUnit(mPlayer->notifyInterval());
+            preferencesDialog.updateVideoSliderRange(mPlayer->duration());
+            preferencesDialog.updateVideoSlider(mPlayer->position());
+            preferencesDialog.setSeekAreaEnabled(mPlayer->isSeekable());
+            preferencesDialog.setAudioAreaEnabled(mPlayer->audio());
+            preferencesDialog.updateVideoTracks(mPlayer->internalVideoTracks());
+            preferencesDialog.updateAudioTracks(mPlayer->internalAudioTracks(), false);
             if (SettingsManager::getInstance()->getAudioAutoLoad())
-                preferencesDialog.updateAudioTracks(player.externalAudioTracks(), true);
-            preferencesDialog.updateSubtitleTracks(player.internalSubtitleTracks(), false);
+                preferencesDialog.updateAudioTracks(mPlayer->externalAudioTracks(), true);
+            preferencesDialog.updateSubtitleTracks(mPlayer->internalSubtitleTracks(), false);
             if (SettingsManager::getInstance()->getSubtitleAutoLoad())
             {
                 QVariantList externalSubtitleTracks;
-                QStringList externalSubtitlePaths = externalFilesToLoad(QFileInfo(player.file()), QStringLiteral("sub"));
+                QStringList externalSubtitlePaths = externalFilesToLoad(QFileInfo(mPlayer->file()), QStringLiteral("sub"));
                 if (!externalSubtitlePaths.isEmpty())
                 {
                     for (auto& subPath : externalSubtitlePaths)
@@ -151,11 +151,11 @@ DesktopVideoPlayer::DesktopVideoPlayer(QObject *parent)
             if (SettingsManager::getInstance()->getSubtitle())
             {
                 subtitle.setEnabled(true);
-                if (player.subtitleStreamCount() > 0)
-                    player.setSubtitleStream(0);
+                if (mPlayer->subtitleStreamCount() > 0)
+                    mPlayer->setSubtitleStream(0);
                 else if (SettingsManager::getInstance()->getSubtitleAutoLoad())
                 {
-                    QStringList externalSubtitles = externalFilesToLoad(QFileInfo(player.file()), QStringLiteral("sub"));
+                    QStringList externalSubtitles = externalFilesToLoad(QFileInfo(mPlayer->file()), QStringLiteral("sub"));
                     if (!externalSubtitles.isEmpty())
                     {
                         if (subtitle.file() != externalSubtitles.constFirst())
@@ -170,17 +170,17 @@ DesktopVideoPlayer::DesktopVideoPlayer(QObject *parent)
             else
                 subtitle.setEnabled(false);
         });
-    QObject::connect(&player, &QtAV::AVPlayer::notifyIntervalChanged,
-        [=, &preferencesDialog, &player]
+    QObject::connect(mPlayer, &QtAV::AVPlayer::notifyIntervalChanged,
+        [=, &preferencesDialog]
         {
-            preferencesDialog.updateVideoSliderUnit(player.notifyInterval());
-            preferencesDialog.updateVideoSlider(player.position());
+            preferencesDialog.updateVideoSliderUnit(mPlayer->notifyInterval());
+            preferencesDialog.updateVideoSlider(mPlayer->position());
         });
-    QObject::connect(&player, &QtAV::AVPlayer::durationChanged,
-        [=, &preferencesDialog, &player](qint64 duration)
+    QObject::connect(mPlayer, &QtAV::AVPlayer::durationChanged,
+        [=, &preferencesDialog](qint64 duration)
         {
             preferencesDialog.updateVideoSliderRange(duration);
-            preferencesDialog.updateVideoSlider(player.position());
+            preferencesDialog.updateVideoSlider(mPlayer->position());
         });
     QMenu trayMenu;
     QAction *optionsAction = trayMenu.addAction(QObject::tr("Preferences"));
@@ -209,35 +209,35 @@ DesktopVideoPlayer::DesktopVideoPlayer(QObject *parent)
         });
     QAction *pauseAction = trayMenu.addAction(QObject::tr("Pause"));
     QObject::connect(pauseAction, &QAction::triggered,
-        [=, &player]
+        [=]
         {
-            if (player.isPlaying())
-                player.pause();
+            if (mPlayer->isPlaying())
+                mPlayer->pause();
         });
     QAction *muteAction = trayMenu.addAction(QObject::tr("Mute"));
     muteAction->setCheckable(true);
     QObject::connect(muteAction, &QAction::triggered,
-        [=, &player, &preferencesDialog](bool checked)
+        [=,&preferencesDialog](bool checked)
         {
-            if (player.audio())
+            if (mPlayer->audio())
             {
                 muteAction->setChecked(checked);
                 SettingsManager::getInstance()->setMute(checked);
                 preferencesDialog.updateVolumeArea();
-                player.audio()->setMute(checked);
+                mPlayer->audio()->setMute(checked);
             }
         });
     trayMenu.addSeparator();
     trayMenu.addAction(QObject::tr("Exit"), qApp, &QApplication::closeAllWindows);
     QSystemTrayIcon trayIcon;
     trayIcon.setIcon(QIcon(QStringLiteral(":/bee.ico")));
-    trayIcon.setToolTip(QStringLiteral("Dynamic Desktop"));
+    trayIcon.setToolTip(QStringLiteral("Video Wallpaper"));
     trayIcon.setContextMenu(&trayMenu);
     trayIcon.show();
-    if (player.audio())
+    if (mPlayer->audio())
     {
-        player.audio()->setVolume(static_cast<qreal>(SettingsManager::getInstance()->getVolume() / 10.0));
-        player.audio()->setMute(SettingsManager::getInstance()->getMute());
+        mPlayer->audio()->setVolume(static_cast<qreal>(SettingsManager::getInstance()->getVolume() / 10.0));
+        mPlayer->audio()->setMute(SettingsManager::getInstance()->getMute());
         muteAction->setCheckable(true);
         muteAction->setChecked(SettingsManager::getInstance()->getMute());
     }
@@ -254,65 +254,16 @@ DesktopVideoPlayer::DesktopVideoPlayer(QObject *parent)
                 optionsAction->triggered();
         });;
     QObject::connect(&preferencesDialog, SIGNAL(pause()), pauseAction, SIGNAL(triggered()));
-    QObject::connect(&preferencesDialog, &PreferencesDialog::urlChanged,
-        [=, &player](const QString &url)
-        {
-            if (SettingsManager::getInstance()->getHwdec())
-            {
-                QStringList decoders = SettingsManager::getInstance()->getDecoders();
-                if (!decoders.contains(QStringLiteral("FFmpeg")))
-                    decoders << QStringLiteral("FFmpeg");
-                player.setVideoDecoderPriority(decoders);
-                if (decoders.contains(QStringLiteral("CUDA")))
-                {
-                    QVariantHash cuda_opt;
-                    cuda_opt[QStringLiteral("surfaces")] = 0;
-                    cuda_opt[QStringLiteral("copyMode")] = QStringLiteral("ZeroCopy");
-                    QVariantHash opt;
-                    opt[QStringLiteral("CUDA")] = cuda_opt;
-                    player.setOptionsForVideoCodec(opt);
-                }
-                if (decoders.contains(QStringLiteral("D3D11")))
-                {
-                    QVariantHash d3d11_opt;
-                    //d3d11_opt[QStringLiteral("???")] = ???;
-                    d3d11_opt[QStringLiteral("copyMode")] = QStringLiteral("ZeroCopy");
-                    QVariantHash opt;
-                    opt[QStringLiteral("D3D11")] = d3d11_opt;
-                    player.setOptionsForVideoCodec(opt);
-                }
-                if (decoders.contains(QStringLiteral("DXVA")))
-                {
-                    QVariantHash dxva_opt;
-                    //dxva_opt[QStringLiteral("???")] = ???;
-                    dxva_opt[QStringLiteral("copyMode")] = QStringLiteral("ZeroCopy");
-                    QVariantHash opt;
-                    opt[QStringLiteral("DXVA")] = dxva_opt;
-                    player.setOptionsForVideoCodec(opt);
-                }
-            }
-            else
-                player.setVideoDecoderPriority(QStringList() << QStringLiteral("FFmpeg"));
-            if (mainWindow->isHidden())
-                mainWindow->show();
-            if (!url.isEmpty())
-            {
-                player.play(url);
-                mainWindow->setWindowTitle(QFileInfo(url).fileName());
-            }
-            else if (player.isPaused())
-                player.pause(false);
-        });
     QObject::connect(&preferencesDialog, &PreferencesDialog::volumeChanged,
-        [=, &player](unsigned int volume)
+        [=](unsigned int volume)
         {
-            if (player.audio())
-                player.audio()->setVolume(static_cast<qreal>(volume / 10.0));
+            if (mPlayer->audio())
+                mPlayer->audio()->setVolume(static_cast<qreal>(volume / 10.0));
         });
     QObject::connect(&preferencesDialog, &PreferencesDialog::muteChanged,
-        [=, &player](bool mute)
+        [=](bool mute)
         {
-            if (player.audio())
+            if (mPlayer->audio())
                 muteAction->triggered(mute);
         });
     QObject::connect(&preferencesDialog, &PreferencesDialog::autostartChanged,
@@ -324,37 +275,37 @@ DesktopVideoPlayer::DesktopVideoPlayer(QObject *parent)
                 SettingsManager::getInstance()->unregAutostart();
         });
     QObject::connect(&preferencesDialog, &PreferencesDialog::seekBySlider,
-        [=, &player](qint64 value)
+        [=](qint64 value)
         {
-            if (player.isLoaded())
-                player.seek(value);
+            if (mPlayer->isLoaded())
+                mPlayer->seek(value);
         });
     QObject::connect(&preferencesDialog, &PreferencesDialog::pictureRatioChanged,
         [=](bool fitDesktop)
         {
             if (fitDesktop)
-                renderer->setOutAspectRatioMode(QtAV::VideoRenderer::RendererAspectRatio);
+                mRenderer->setOutAspectRatioMode(QtAV::VideoRenderer::RendererAspectRatio);
             else
-                renderer->setOutAspectRatioMode(QtAV::VideoRenderer::VideoAspectRatio);
+                mRenderer->setOutAspectRatioMode(QtAV::VideoRenderer::VideoAspectRatio);
         });
     QObject::connect(&preferencesDialog, &PreferencesDialog::videoTrackChanged,
-        [=, &player](unsigned int id)
+        [this](unsigned int id)
         {
-            if (player.isLoaded())
-                if (id != player.currentVideoStream())
-                    player.setVideoStream(id);
+            if (mPlayer->isLoaded())
+                if (id != mPlayer->currentVideoStream())
+                    mPlayer->setVideoStream(id);
         });
     QObject::connect(&preferencesDialog, &PreferencesDialog::audioTrackChanged,
-        [=, &player](unsigned int id)
+        [=](unsigned int id)
         {
-            if (player.isLoaded())
-                if (id != player.currentAudioStream())
-                    player.setAudioStream(id);
+            if (mPlayer->isLoaded())
+                if (id != mPlayer->currentAudioStream())
+                    mPlayer->setAudioStream(id);
         });
     QObject::connect(&preferencesDialog, &PreferencesDialog::subtitleTrackChanged,
-        [=, &player, &subtitle](const QVariant &track)
+        [=, &subtitle](const QVariant &track)
         {
-            if (player.isLoaded())
+            if (mPlayer->isLoaded())
             {
                 const QString newSubFile = track.toString();
                 if (QFileInfo::exists(newSubFile) && subtitle.file() != newSubFile)
@@ -362,23 +313,23 @@ DesktopVideoPlayer::DesktopVideoPlayer(QObject *parent)
                 else
                 {
                     unsigned int id = track.toUInt();
-                    if (id != player.currentSubtitleStream())
-                        player.setSubtitleStream(id);
+                    if (id != mPlayer->currentSubtitleStream())
+                        mPlayer->setSubtitleStream(id);
                 }
             }
         });
     QObject::connect(&preferencesDialog, &PreferencesDialog::subtitleOpened,
-        [=, &player, &subtitle](const QString &subPath)
+        [=,&subtitle](const QString &subPath)
         {
-            if (player.isLoaded())
+            if (mPlayer->isLoaded())
                 if (subtitle.file() != subPath)
                     subtitle.setFile(subPath);
         });
     QObject::connect(&preferencesDialog, &PreferencesDialog::audioOpened,
-        [=, &player](const QString &audioPath)
+        [=](const QString &audioPath)
         {
-            if (player.isLoaded() && player.audio())
-                player.setExternalAudio(audioPath);
+            if (mPlayer->isLoaded() && mPlayer->audio())
+                mPlayer->setExternalAudio(audioPath);
         });
     QObject::connect(&preferencesDialog, &PreferencesDialog::charsetChanged,
         [=, &subtitle](const QString &charset)
@@ -397,9 +348,9 @@ DesktopVideoPlayer::DesktopVideoPlayer(QObject *parent)
             subtitle.setEnabled(enabled);
         });
     QObject::connect(&preferencesDialog, &PreferencesDialog::rendererChanged,
-        [=, &subtitle, &player](QtAV::VideoRendererId rendererId) mutable
+        [=, &subtitle](QtAV::VideoRendererId rendererId) mutable
         {
-            if (rendererId != renderer->id())
+            if (rendererId != mRenderer->id())
             {
                 QtAV::VideoRenderer *newRenderer = QtAV::VideoRenderer::create(rendererId);
                 if (!newRenderer || !newRenderer->isAvailable() || !newRenderer->widget())
@@ -424,7 +375,7 @@ DesktopVideoPlayer::DesktopVideoPlayer(QObject *parent)
                     newRenderer->widget()->setWindowTitle(QStringLiteral("Dynamic Desktop"));
                     subtitle.uninstall();
                     subtitle.installTo(newRenderer);
-                    player.setRenderer(newRenderer);
+                    mPlayer->setRenderer(newRenderer);
                     const QtAV::VideoRendererId videoRendererId = newRenderer->id();
                     if (videoRendererId == QtAV::VideoRendererId_GLWidget
                                 || videoRendererId == QtAV::VideoRendererId_GLWidget2
@@ -437,21 +388,21 @@ DesktopVideoPlayer::DesktopVideoPlayer(QObject *parent)
                     else
                         newRenderer->setOutAspectRatioMode(QtAV::VideoRenderer::VideoAspectRatio);
                     HWND hwnd = nullptr;
-                    if (renderer->widget())
+                    if (mRenderer->widget())
                     {
-                        newRenderer->widget()->setWindowTitle(renderer->widget()->windowTitle());
-                        if (renderer->widget()->geometry() != screenGeometry)
-                            newRenderer->widget()->setGeometry(renderer->widget()->geometry());
+                        newRenderer->widget()->setWindowTitle(mRenderer->widget()->windowTitle());
+                        if (mRenderer->widget()->geometry() != screenGeometry)
+                            newRenderer->widget()->setGeometry(mRenderer->widget()->geometry());
                         if (newRenderer->widget()->isHidden())
                             newRenderer->widget()->show();
                         if (!mWindowMode)
-                            hwnd = GetParent(reinterpret_cast<HWND>(renderer->widget()->winId()));
-                        if (renderer->widget()->testAttribute(Qt::WA_DeleteOnClose))
-                            renderer->widget()->close();
+                            hwnd = GetParent(reinterpret_cast<HWND>(mRenderer->widget()->winId()));
+                        if (mRenderer->widget()->testAttribute(Qt::WA_DeleteOnClose))
+                            mRenderer->widget()->close();
                         else
                         {
-                            renderer->widget()->close();
-                            delete renderer->widget();
+                            mRenderer->widget()->close();
+                            delete mRenderer->widget();
                         }
                     }
                     else if (newRenderer->widget()->isHidden())
@@ -463,7 +414,7 @@ DesktopVideoPlayer::DesktopVideoPlayer(QObject *parent)
                     }
                     if ((hwnd != nullptr) && !mWindowMode)
                         SetParent(reinterpret_cast<HWND>(newRenderer->widget()->winId()), hwnd);
-                    renderer = newRenderer;
+                    mRenderer = newRenderer;
                     mainWindow = newRenderer->widget();
                 }
             }
@@ -472,11 +423,11 @@ DesktopVideoPlayer::DesktopVideoPlayer(QObject *parent)
         [=](const QString &quality)
         {
             if (quality == QStringLiteral("default"))
-                renderer->setQuality(QtAV::VideoRenderer::QualityDefault);
+                mRenderer->setQuality(QtAV::VideoRenderer::QualityDefault);
             else if (quality == QStringLiteral("best"))
-                renderer->setQuality(QtAV::VideoRenderer::QualityBest);
+                mRenderer->setQuality(QtAV::VideoRenderer::QualityBest);
             else
-                renderer->setQuality(QtAV::VideoRenderer::QualityFastest);
+                mRenderer->setQuality(QtAV::VideoRenderer::QualityFastest);
         });
     if (!SettingsManager::getInstance()->getUrl().isEmpty())
     {
@@ -506,6 +457,57 @@ DesktopVideoPlayer::DesktopVideoPlayer(QObject *parent)
     ShowWindow(HWORKERW, SW_HIDE);
     ReleaseMutex(mutex);
     CloseHandle(mutex);
+}
+
+void DesktopVideoPlayer::playVideo(const QString &url)
+{
+    if (SettingsManager::getInstance()->getHwdec())
+    {
+        QStringList decoders = SettingsManager::getInstance()->getDecoders();
+        if (!decoders.contains(QStringLiteral("FFmpeg")))
+            decoders << QStringLiteral("FFmpeg");
+        mPlayer->setVideoDecoderPriority(decoders);
+        if (decoders.contains(QStringLiteral("CUDA")))
+        {
+            QVariantHash cuda_opt;
+            cuda_opt[QStringLiteral("surfaces")] = 0;
+            cuda_opt[QStringLiteral("copyMode")] = QStringLiteral("ZeroCopy");
+            QVariantHash opt;
+            opt[QStringLiteral("CUDA")] = cuda_opt;
+            mPlayer->setOptionsForVideoCodec(opt);
+        }
+        if (decoders.contains(QStringLiteral("D3D11")))
+        {
+            QVariantHash d3d11_opt;
+            //d3d11_opt[QStringLiteral("???")] = ???;
+            d3d11_opt[QStringLiteral("copyMode")] = QStringLiteral("ZeroCopy");
+            QVariantHash opt;
+            opt[QStringLiteral("D3D11")] = d3d11_opt;
+            mPlayer->setOptionsForVideoCodec(opt);
+        }
+        if (decoders.contains(QStringLiteral("DXVA")))
+        {
+            QVariantHash dxva_opt;
+            //dxva_opt[QStringLiteral("???")] = ???;
+            dxva_opt[QStringLiteral("copyMode")] = QStringLiteral("ZeroCopy");
+            QVariantHash opt;
+            opt[QStringLiteral("DXVA")] = dxva_opt;
+            mPlayer->setOptionsForVideoCodec(opt);
+        }
+    }
+    else
+        mPlayer->setVideoDecoderPriority(QStringList() << QStringLiteral("FFmpeg"));
+
+    auto mainWindow = mRenderer->widget();
+    if (mainWindow->isHidden())
+        mainWindow->show();
+    if (!url.isEmpty())
+    {
+        mPlayer->play(url);
+        mainWindow->setWindowTitle(QFileInfo(url).fileName());
+    }
+    else if (mPlayer->isPaused())
+        mPlayer->pause(false);
 }
 
 QStringList DesktopVideoPlayer::externalFilesToLoad(const QFileInfo &originalMediaFile, const QString &fileType)

@@ -4,7 +4,7 @@
 #include <QApplication>
 
 class QQmlApplicationEngine;
-class DesktopVideoPlayer;
+class VideoWallpaperViewController;
 
 class Application : public QApplication
 {
@@ -18,7 +18,7 @@ public:
 
 private:
     QQmlApplicationEngine* mQmlEngine;
-    DesktopVideoPlayer *mDesktopPlayer;
+    VideoWallpaperViewController* mVideoWallpaperVC;
 };
 
 #endif // APPLICATION_H

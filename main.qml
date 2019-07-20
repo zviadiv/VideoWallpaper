@@ -16,7 +16,8 @@ Window {
         folder: shortcuts.home
         nameFilters: [ "Video files (*.mp4 *.avi)", "All files (*)" ]
         onAccepted: {
-            console.log("Video path: " + fileDialog.fileUrls)
+            console.log("Video path: " + browseVideoDialog.fileUrls)
+            viewController.videoUrl = browseVideoDialog.fileUrls[0]
         }
     }
 
@@ -26,7 +27,8 @@ Window {
         folder: shortcuts.home
         nameFilters: [ "Audio files (*.mp3 *.wav)", "All files (*)" ]
         onAccepted: {
-            console.log("Audio path: " + fileDialog.fileUrls)
+            console.log("Audio path: " + browseAudioDialog.fileUrls)
+            viewController.musicPath = browseAudioDialog.fileUrls[0]
         }
     }
 
@@ -99,6 +101,10 @@ Window {
                 text: qsTr("APPLY")
                 spacing: 0
                 highlighted: false
+
+                onClicked: {
+                    viewController.playVideo()
+                }
             }
 
             Button {
@@ -279,6 +285,7 @@ Window {
         width: 640
         height: 81
         color: "#495a94"
+
         Button {
             id: buttonRemoveWallpaper
             x: 26
@@ -289,7 +296,7 @@ Window {
         }
 
         Button {
-            id: buttonRemoveWallpaper1
+            id: buttonSaveWallpaperAndExit
             x: 387
             y: 28
             width: 226

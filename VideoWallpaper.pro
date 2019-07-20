@@ -1,5 +1,17 @@
-QT += quick widgets av avwidgets
-CONFIG += c++11
+!win32: error("This project only supports Win32 platform!")
+isEmpty(ROOT): ROOT = $$PWD
+TARGET = VideoWallpaper
+BIN_DIR = $$ROOT/bin
+contains(QT_ARCH, x86_64) {
+    BIN_DIR = $$join(BIN_DIR,,,64)
+    TARGET = $$join(TARGET,,,64)
+}
+CONFIG(debug, debug|release): TARGET = $$join(TARGET,,,d)
+QT += quick gui widgets av avwidgets
+TEMPLATE = app
+DEFINES += QT_DEPRECATED_WARNINGS QT_DISABLE_DEPRECATED_BEFORE=0x050603
+CONFIG *= c++11
+CONFIG -= app_bundle
 LIBS += -lUser32 -lDwmapi
 
 # The following define makes your compiler emit warnings if you use
@@ -30,6 +42,8 @@ QML_IMPORT_PATH =
 # Additional import path used to resolve QML modules just for Qt Quick Designer
 QML_DESIGNER_IMPORT_PATH =
 
+target.path = $$BIN_DIR
+
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
@@ -45,3 +59,27 @@ HEADERS += \
 
 FORMS += \
     preferencesdialog.ui
+
+    libs.path = $$BIN_DIR
+    libs.files = \
+        $$[QT_INSTALL_BINS]/QtAV*.dll \
+        $$[QT_INSTALL_BINS]/avcodec-*.dll \
+        $$[QT_INSTALL_BINS]/avdevice-*.dll \
+        $$[QT_INSTALL_BINS]/avfilter-*.dll \
+        $$[QT_INSTALL_BINS]/avformat-*.dll \
+        $$[QT_INSTALL_BINS]/avresample-*.dll \
+        $$[QT_INSTALL_BINS]/avutil-*.dll \
+        $$[QT_INSTALL_BINS]/ass.dll \
+        $$[QT_INSTALL_BINS]/libass.dll \
+        $$[QT_INSTALL_BINS]/OpenAL32*.dll \
+        $$[QT_INSTALL_BINS]/libEGL.dll \
+        $$[QT_INSTALL_BINS]/libGLESv2.dll \
+        $$[QT_INSTALL_BINS]/postproc-*.dll \
+        $$[QT_INSTALL_BINS]/swresample-*.dll \
+        $$[QT_INSTALL_BINS]/swscale-*.dll
+    isEmpty(windeployqt): windeployqt = $$[QT_INSTALL_BINS]/windeployqt.exe
+    exists("$${windeployqt}") {
+        libs.commands = $$quote(\"$${windeployqt}\" --plugindir \"$${BIN_DIR}/plugins\" --force --no-translations --no-system-d3d-compiler --compiler-runtime --no-angle --no-opengl-sw -opengl --no-svg --list source \"$${BIN_DIR}/$${TARGET}.exe\")
+        libs.commands = $$join(libs.commands, $$escape_expand(\\n\\t))
+    }
+    INSTALLS += libs
