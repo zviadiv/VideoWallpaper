@@ -15,6 +15,7 @@ class DesktopVideoPlayer : public QObject
 {
 public:
     DesktopVideoPlayer(QObject *parent = nullptr);
+    ~DesktopVideoPlayer();
 
     void playVideo(const QString &url);
 

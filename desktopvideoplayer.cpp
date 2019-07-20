@@ -109,20 +109,13 @@ DesktopVideoPlayer::DesktopVideoPlayer(QObject *parent)
     mainWindow->setWindowTitle(QStringLiteral("Video Wallpaper"));
     mPlayer = new QtAV::AVPlayer(this);
     mPlayer->setRenderer(mRenderer);
-    QtAV::SubtitleFilter subtitle;
-    subtitle.setPlayer(mPlayer);
-    subtitle.installTo(mRenderer);
-    subtitle.setCodec(SettingsManager::getInstance()->getCharset().toLatin1());
-    subtitle.setEngines(QStringList() << QStringLiteral("LibASS") << QStringLiteral("FFmpeg"));
-    subtitle.setAutoLoad(SettingsManager::getInstance()->getSubtitleAutoLoad());
-    subtitle.setEnabled(SettingsManager::getInstance()->getSubtitle());
     mPlayer->setRepeat(-1);
     PreferencesDialog preferencesDialog;
     QObject::connect(mPlayer, SIGNAL(positionChanged(qint64)), &preferencesDialog, SIGNAL(updateVideoSlider(qint64)));
     QObject::connect(mPlayer, &QtAV::AVPlayer::loaded,
-        [=, &preferencesDialog, &subtitle]
+        [=, &preferencesDialog]
         {
-            preferencesDialog.clearAllTracks();
+            /*preferencesDialog.clearAllTracks();
             preferencesDialog.updateVideoSliderUnit(mPlayer->notifyInterval());
             preferencesDialog.updateVideoSliderRange(mPlayer->duration());
             preferencesDialog.updateVideoSlider(mPlayer->position());
@@ -132,43 +125,7 @@ DesktopVideoPlayer::DesktopVideoPlayer(QObject *parent)
             preferencesDialog.updateAudioTracks(mPlayer->internalAudioTracks(), false);
             if (SettingsManager::getInstance()->getAudioAutoLoad())
                 preferencesDialog.updateAudioTracks(mPlayer->externalAudioTracks(), true);
-            preferencesDialog.updateSubtitleTracks(mPlayer->internalSubtitleTracks(), false);
-            if (SettingsManager::getInstance()->getSubtitleAutoLoad())
-            {
-                QVariantList externalSubtitleTracks;
-                QStringList externalSubtitlePaths = externalFilesToLoad(QFileInfo(mPlayer->file()), QStringLiteral("sub"));
-                if (!externalSubtitlePaths.isEmpty())
-                {
-                    for (auto& subPath : externalSubtitlePaths)
-                    {
-                        QVariantMap externalSubtitle;
-                        externalSubtitle[QStringLiteral("file")] = subPath;
-                        externalSubtitleTracks.append(externalSubtitle);
-                    }
-                    preferencesDialog.updateSubtitleTracks(externalSubtitleTracks, true);
-                }
-            }
-            if (SettingsManager::getInstance()->getSubtitle())
-            {
-                subtitle.setEnabled(true);
-                if (mPlayer->subtitleStreamCount() > 0)
-                    mPlayer->setSubtitleStream(0);
-                else if (SettingsManager::getInstance()->getSubtitleAutoLoad())
-                {
-                    QStringList externalSubtitles = externalFilesToLoad(QFileInfo(mPlayer->file()), QStringLiteral("sub"));
-                    if (!externalSubtitles.isEmpty())
-                    {
-                        if (subtitle.file() != externalSubtitles.constFirst())
-                            subtitle.setFile(externalSubtitles.constFirst());
-                    }
-                    else
-                        subtitle.setEnabled(false);
-                }
-                else
-                    subtitle.setEnabled(false);
-            }
-            else
-                subtitle.setEnabled(false);
+            */
         });
     QObject::connect(mPlayer, &QtAV::AVPlayer::notifyIntervalChanged,
         [=, &preferencesDialog]
@@ -179,8 +136,8 @@ DesktopVideoPlayer::DesktopVideoPlayer(QObject *parent)
     QObject::connect(mPlayer, &QtAV::AVPlayer::durationChanged,
         [=, &preferencesDialog](qint64 duration)
         {
-            preferencesDialog.updateVideoSliderRange(duration);
-            preferencesDialog.updateVideoSlider(mPlayer->position());
+            /*preferencesDialog.updateVideoSliderRange(duration);
+            preferencesDialog.updateVideoSlider(mPlayer->position());*/
         });
     QMenu trayMenu;
     QAction *optionsAction = trayMenu.addAction(QObject::tr("Preferences"));
@@ -302,53 +259,14 @@ DesktopVideoPlayer::DesktopVideoPlayer(QObject *parent)
                 if (id != mPlayer->currentAudioStream())
                     mPlayer->setAudioStream(id);
         });
-    QObject::connect(&preferencesDialog, &PreferencesDialog::subtitleTrackChanged,
-        [=, &subtitle](const QVariant &track)
-        {
-            if (mPlayer->isLoaded())
-            {
-                const QString newSubFile = track.toString();
-                if (QFileInfo::exists(newSubFile) && subtitle.file() != newSubFile)
-                    subtitle.setFile(newSubFile);
-                else
-                {
-                    unsigned int id = track.toUInt();
-                    if (id != mPlayer->currentSubtitleStream())
-                        mPlayer->setSubtitleStream(id);
-                }
-            }
-        });
-    QObject::connect(&preferencesDialog, &PreferencesDialog::subtitleOpened,
-        [=,&subtitle](const QString &subPath)
-        {
-            if (mPlayer->isLoaded())
-                if (subtitle.file() != subPath)
-                    subtitle.setFile(subPath);
-        });
     QObject::connect(&preferencesDialog, &PreferencesDialog::audioOpened,
         [=](const QString &audioPath)
         {
             if (mPlayer->isLoaded() && mPlayer->audio())
                 mPlayer->setExternalAudio(audioPath);
         });
-    QObject::connect(&preferencesDialog, &PreferencesDialog::charsetChanged,
-        [=, &subtitle](const QString &charset)
-        {
-            if (SettingsManager::getInstance()->getSubtitle())
-                subtitle.setCodec(charset.toLatin1());
-        });
-    QObject::connect(&preferencesDialog, &PreferencesDialog::subtitleAutoLoadChanged,
-        [=, &subtitle](bool autoload)
-        {
-            subtitle.setAutoLoad(autoload);
-        });
-    QObject::connect(&preferencesDialog, &PreferencesDialog::subtitleEnabled,
-        [=, &subtitle](bool enabled)
-        {
-            subtitle.setEnabled(enabled);
-        });
     QObject::connect(&preferencesDialog, &PreferencesDialog::rendererChanged,
-        [=, &subtitle](QtAV::VideoRendererId rendererId) mutable
+        [=](QtAV::VideoRendererId rendererId) mutable
         {
             if (rendererId != mRenderer->id())
             {
@@ -373,8 +291,6 @@ DesktopVideoPlayer::DesktopVideoPlayer(QObject *parent)
                     }
                     newRenderer->widget()->setWindowIcon(QIcon(QStringLiteral(":/bee.ico")));
                     newRenderer->widget()->setWindowTitle(QStringLiteral("Dynamic Desktop"));
-                    subtitle.uninstall();
-                    subtitle.installTo(newRenderer);
                     mPlayer->setRenderer(newRenderer);
                     const QtAV::VideoRendererId videoRendererId = newRenderer->id();
                     if (videoRendererId == QtAV::VideoRendererId_GLWidget
@@ -453,7 +369,10 @@ DesktopVideoPlayer::DesktopVideoPlayer(QObject *parent)
         if (hwnd != nullptr)
             SetParent(reinterpret_cast<HWND>(mainWindow->winId()), hwnd);
     }
-    //int exec = QApplication::exec();
+}
+
+DesktopVideoPlayer::~DesktopVideoPlayer()
+{
     ShowWindow(HWORKERW, SW_HIDE);
     ReleaseMutex(mutex);
     CloseHandle(mutex);
