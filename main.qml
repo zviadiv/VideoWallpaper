@@ -4,11 +4,17 @@ import QtQuick.Controls 2.2
 import QtQuick.Layouts 1.3
 import QtQuick.Dialogs 1.0
 
-Window {
+ApplicationWindow {
+    id:root
     visible: true
     width: 640
     height: 600
     title: qsTr("Video Wallpaper")
+
+    onClosing: {
+        console.log("Closing app window");
+        //root.close()
+    }
 
     FileDialog {
         id: browseVideoDialog
@@ -18,6 +24,7 @@ Window {
         onAccepted: {
             console.log("Video path: " + browseVideoDialog.fileUrls)
             viewController.videoUrl = browseVideoDialog.fileUrls[0]
+            textInputVideoPath.text = browseVideoDialog.fileUrls[0]
         }
     }
 
@@ -29,6 +36,7 @@ Window {
         onAccepted: {
             console.log("Audio path: " + browseAudioDialog.fileUrls)
             viewController.musicPath = browseAudioDialog.fileUrls[0]
+            textInputMusicPath.text = browseAudioDialog.fileUrls[0]
         }
     }
 
@@ -101,6 +109,7 @@ Window {
                 text: qsTr("APPLY")
                 spacing: 0
                 highlighted: false
+                enabled: viewController.videoUrl.length != 0
 
                 onClicked: {
                     viewController.playVideo()
@@ -114,6 +123,11 @@ Window {
                 width: 100
                 height: 24
                 text: qsTr("REMOVE")
+                enabled: viewController.videoUrl.length != 0
+
+                onClicked: {
+                    viewController.removeVideo()
+                }
             }
 
             Label {
@@ -136,10 +150,11 @@ Window {
 
             ComboBox {
                 id: comboBoxVideoSize
-                x: 154
-                y: 313
-                width: 105
-                height: 17
+                x: 152
+                y: 308
+                width: 99
+                height: 28
+                model: [ "Cover", "Contain", "Stretch" ]
             }
 
             CustomSlider {
@@ -249,6 +264,7 @@ Window {
         text: qsTr("APPLY")
         highlighted: false
         spacing: 0
+        enabled: viewController.musicUrl.length != 0
     }
 
     Button {
@@ -258,6 +274,7 @@ Window {
         width: 100
         height: 24
         text: qsTr("REMOVE")
+        enabled: viewController.musicUrl.length != 0
     }
 
     Label {

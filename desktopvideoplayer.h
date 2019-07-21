@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QFileInfo>
+#include <QVersionNumber>
 
 // Forward declare
 namespace QtAV
@@ -17,6 +18,7 @@ public:
     DesktopVideoPlayer(QObject *parent = nullptr);
     ~DesktopVideoPlayer();
 
+    void removeVideo();
     void playVideo(const QString &url);
 
 private:
@@ -26,6 +28,7 @@ private:
     bool mWindowMode = false;
     QtAV::AVPlayer* mPlayer;
     QtAV::VideoRenderer* mRenderer;
+    QVersionNumber mCurrentVersion;
 };
 
 #endif // DESKTOPVIDEOPLAYER_H

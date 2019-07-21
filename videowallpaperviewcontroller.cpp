@@ -18,3 +18,8 @@ void VideoWallpaperViewController::playVideo()
     qDebug() << "Attempting to start video playback: " << mVideoUrl;
     mDesktopPlayer->playVideo(mVideoUrl);
 }
+
+void VideoWallpaperViewController::removeVideo()
+{
+    mDesktopPlayer->removeVideo();
+}

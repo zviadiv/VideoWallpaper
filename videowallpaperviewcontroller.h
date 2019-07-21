@@ -22,6 +22,7 @@ signals:
 
 public slots:
     void playVideo();
+    void removeVideo();
 
 private:
     DesktopVideoPlayer *mDesktopPlayer;

@@ -6,12 +6,10 @@
 #include <QDesktopWidget>
 #include <QMessageBox>
 #include <QSystemTrayIcon>
-#include <QVersionNumber>
 #include <QDir>
 #include <QMenu>
 #include <QtAV>
 
-static HANDLE mutex = nullptr;
 static HWND HWORKERW = nullptr;
 
 BOOL CALLBACK EnumWindowsProc(_In_ HWND hwnd, _In_ LPARAM lParam)
@@ -46,20 +44,7 @@ DesktopVideoPlayer::DesktopVideoPlayer(QObject *parent)
     : QObject(parent)
 {
     int suffixIndex;
-    QVersionNumber currentVersion = QVersionNumber::fromString(QSysInfo::kernelVersion(), &suffixIndex);
-    QVersionNumber win7Version(6, 1, 7600);
-    if (currentVersion < win7Version)
-    {
-        QMessageBox::critical(nullptr, QStringLiteral("Video Wallpaper"), QObject::tr("This application only supports Windows 7 and newer."));
-        qApp->quit();
-    }
-    mutex = CreateMutex(nullptr, FALSE, TEXT("DesktopVideoPlayer.AppMutex"));
-    if ((mutex != nullptr) && (GetLastError() == ERROR_ALREADY_EXISTS))
-    {
-        QMessageBox::critical(nullptr, QStringLiteral("Video Wallpaper"), QObject::tr("There is another instance running. Please do not run twice."));
-        ReleaseMutex(mutex);
-        qApp->quit();
-    }
+    mCurrentVersion = QVersionNumber::fromString(QSysInfo::kernelVersion(), &suffixIndex);
 
     if (SettingsManager::getInstance()->getAutostart())
         SettingsManager::getInstance()->regAutostart();
@@ -326,7 +311,7 @@ DesktopVideoPlayer::DesktopVideoPlayer(QObject *parent)
                     if ((hwnd == nullptr) && !mWindowMode)
                     {
                         QVersionNumber win10Version(10, 0, 10240);
-                        hwnd = getWorkerW(currentVersion < win10Version);
+                        hwnd = getWorkerW(mCurrentVersion < win10Version);
                     }
                     if ((hwnd != nullptr) && !mWindowMode)
                         SetParent(reinterpret_cast<HWND>(newRenderer->widget()->winId()), hwnd);
@@ -365,7 +350,7 @@ DesktopVideoPlayer::DesktopVideoPlayer(QObject *parent)
         // also block our desktop icons, however using
         // "WorkerW" as our parent window will not result
         // in this problem, I don't know why. It's strange.
-        HWND hwnd = getWorkerW(currentVersion < win10Version);
+        HWND hwnd = getWorkerW(mCurrentVersion < win10Version);
         if (hwnd != nullptr)
             SetParent(reinterpret_cast<HWND>(mainWindow->winId()), hwnd);
     }
@@ -373,9 +358,15 @@ DesktopVideoPlayer::DesktopVideoPlayer(QObject *parent)
 
 DesktopVideoPlayer::~DesktopVideoPlayer()
 {
+    removeVideo();
+}
+
+void DesktopVideoPlayer::removeVideo()
+{
+    if (mPlayer->isPlaying())
+        mPlayer->stop();
+    mRenderer->widget()->hide();
     ShowWindow(HWORKERW, SW_HIDE);
-    ReleaseMutex(mutex);
-    CloseHandle(mutex);
 }
 
 void DesktopVideoPlayer::playVideo(const QString &url)
@@ -420,13 +411,18 @@ void DesktopVideoPlayer::playVideo(const QString &url)
     auto mainWindow = mRenderer->widget();
     if (mainWindow->isHidden())
         mainWindow->show();
-    if (!url.isEmpty())
+
+    if (mPlayer->isPaused())
+        mPlayer->pause(false);
+    else if (!url.isEmpty())
     {
         mPlayer->play(url);
         mainWindow->setWindowTitle(QFileInfo(url).fileName());
     }
-    else if (mPlayer->isPaused())
-        mPlayer->pause(false);
+
+    QVersionNumber win10Version(10, 0, 10240);
+    bool legacyMode = mCurrentVersion < win10Version;
+    ShowWindow(HWORKERW, legacyMode ? SW_HIDE : SW_SHOW);
 }
 
 QStringList DesktopVideoPlayer::externalFilesToLoad(const QFileInfo &originalMediaFile, const QString &fileType)
