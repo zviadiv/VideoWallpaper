@@ -12,6 +12,11 @@ namespace QtAV
     class VideoRenderer;
 }
 
+enum class VideoFillMode
+{
+    Cover = 0, Contain, Stretch
+};
+
 class DesktopVideoPlayer : public QObject
 {
 public:
@@ -20,6 +25,10 @@ public:
 
     void removeVideo();
     void playVideo(const QString &url);
+    void setVideoVolume(double volume);
+    void setMute(bool mute);
+
+    void setVideoFillMode(VideoFillMode mode);
 
 private:
     QStringList externalFilesToLoad(const QFileInfo &originalMediaFile, const QString &fileType);

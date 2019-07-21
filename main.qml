@@ -155,6 +155,26 @@ ApplicationWindow {
                 width: 99
                 height: 28
                 model: [ "Cover", "Contain", "Stretch" ]
+
+                enum VideoFillMode
+                {
+                    Cover = 0, Contain, Stretch
+                }
+
+                onCurrentIndexChanged: {
+                    switch (comboBoxVideoSize.currentIndex)
+                    {
+                    case 0:
+                        viewController.videoFillMode = Constants.VideoFillMode.Cover
+                        break;
+                    case 1:
+                        viewController.videoFillMode = Constants.VideoFillMode.Contain
+                        break;
+                    case 2:
+                        viewController.videoFillMode = Constants.VideoFillMode.Stretch
+                        break;
+                    }
+                }
             }
 
             CustomSlider {
@@ -173,6 +193,7 @@ ApplicationWindow {
                 slider.width: 144
                 slider.height: 21
                 slider.value: 0
+                enabled: checkBoxVideoOverlay.checked
             }
 
             CustomSlider {
@@ -181,7 +202,12 @@ ApplicationWindow {
                 slider.y: 348
                 slider.width: 144
                 slider.height: 21
-                slider.value: 0
+                slider.value: 0.5
+                enabled: checkBoxVideoVolume.checked
+
+                onValueChanged: {
+                    viewController.videoVolume = slider.value
+                }
             }
 
             CheckBox {
@@ -189,6 +215,11 @@ ApplicationWindow {
                 x: 317
                 y: 338
                 text: qsTr("VIDEO VOLUME")
+                checked: false
+
+                onCheckedChanged: {
+                    viewController.mute = !checkBoxVideoVolume.checked
+                }
             }
 
             CheckBox {
@@ -196,6 +227,7 @@ ApplicationWindow {
                 x: 317
                 y: 300
                 text: qsTr("VIDEO OVERLAY")
+                checked: false
             }
 
             Rectangle {

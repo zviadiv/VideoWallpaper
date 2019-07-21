@@ -2,5 +2,6 @@
     <qresource prefix="/">
         <file>main.qml</file>
         <file>CustomSlider.qml</file>
+        <file>Constants.qml</file>
     </qresource>
 </RCC>

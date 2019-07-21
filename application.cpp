@@ -14,6 +14,12 @@ HANDLE Application::msMutex = nullptr;
 Application::Application(int &argc, char **argv)
     : QApplication(argc, argv)
 {
+    QCoreApplication::setApplicationName(QStringLiteral("Video Wallpaper"));
+    QApplication::setApplicationDisplayName(QStringLiteral("Video Wallpaper"));
+    QCoreApplication::setApplicationVersion(QStringLiteral("1.0"));
+    QCoreApplication::setOrganizationName(QStringLiteral("undefined"));
+    QCoreApplication::setOrganizationDomain(QStringLiteral("undefined"));
+
     checkCompatibility();
 
     mQmlEngine = new QQmlApplicationEngine(this);

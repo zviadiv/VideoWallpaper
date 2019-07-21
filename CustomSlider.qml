@@ -3,7 +3,11 @@ import QtQuick.Controls 2.2
 
 Item {
 
+    id: root
+
     property alias slider: slider
+
+    signal valueChanged()
 
     Slider {
         id: slider
@@ -11,6 +15,7 @@ Item {
 
         onValueChanged: {
             label.text = Math.floor(slider.value * 100)
+            root.valueChanged()
         }
     }
 

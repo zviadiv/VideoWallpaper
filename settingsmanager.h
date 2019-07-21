@@ -19,7 +19,7 @@ public:
 
     QString getUrl() const;
     bool getMute() const;
-    unsigned int getVolume() const;
+    double getVolume() const;
     bool getAutostart() const;
     bool getHwdec() const;
     QStringList getDecoders() const;
@@ -35,7 +35,7 @@ public:
 
     void setUrl(const QString &url);
     void setMute(bool mute);
-    void setVolume(unsigned int volume);
+    void setVolume(double volume);
     void setAutostart(bool enable);
     void setHwdec(bool enable);
     void setDecoders(const QStringList &decoders);

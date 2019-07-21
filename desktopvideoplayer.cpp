@@ -72,10 +72,10 @@ DesktopVideoPlayer::DesktopVideoPlayer(QObject *parent)
         mRenderer->setQuality(QtAV::VideoRenderer::QualityBest);
     else
         mRenderer->setQuality(QtAV::VideoRenderer::QualityFastest);
-    if (SettingsManager::getInstance()->getFitDesktop())
+    /*if (SettingsManager::getInstance()->getFitDesktop())
         mRenderer->setOutAspectRatioMode(QtAV::VideoRenderer::RendererAspectRatio);
     else
-        mRenderer->setOutAspectRatioMode(QtAV::VideoRenderer::VideoAspectRatio);
+        mRenderer->setOutAspectRatioMode(QtAV::VideoRenderer::VideoAspectRatio);*/
     QWidget *mainWindow = mRenderer->widget();
     const Qt::WindowFlags rendererWindowFlags = Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint | Qt::WindowDoesNotAcceptFocus;
     const QRect screenGeometry = QApplication::desktop()->screenGeometry(mainWindow);
@@ -176,9 +176,9 @@ DesktopVideoPlayer::DesktopVideoPlayer(QObject *parent)
     trayIcon.setToolTip(QStringLiteral("Video Wallpaper"));
     trayIcon.setContextMenu(&trayMenu);
     trayIcon.show();
-    if (mPlayer->audio())
+    /*if (mPlayer->audio())
     {
-        mPlayer->audio()->setVolume(static_cast<qreal>(SettingsManager::getInstance()->getVolume() / 10.0));
+        mPlayer->audio()->setVolume(settingsManager::getInstance()->getVolume()));
         mPlayer->audio()->setMute(SettingsManager::getInstance()->getMute());
         muteAction->setCheckable(true);
         muteAction->setChecked(SettingsManager::getInstance()->getMute());
@@ -188,7 +188,7 @@ DesktopVideoPlayer::DesktopVideoPlayer(QObject *parent)
         muteAction->setCheckable(false);
         muteAction->setEnabled(false);
         preferencesDialog.setVolumeAreaEnabled(false);
-    }
+    }*/
     QObject::connect(&trayIcon, &QSystemTrayIcon::activated,
         [=](QSystemTrayIcon::ActivationReason reason)
         {
@@ -200,7 +200,7 @@ DesktopVideoPlayer::DesktopVideoPlayer(QObject *parent)
         [=](unsigned int volume)
         {
             if (mPlayer->audio())
-                mPlayer->audio()->setVolume(static_cast<qreal>(volume / 10.0));
+                mPlayer->audio()->setVolume(volume);
         });
     QObject::connect(&preferencesDialog, &PreferencesDialog::muteChanged,
         [=](bool mute)
@@ -371,6 +371,9 @@ void DesktopVideoPlayer::removeVideo()
 
 void DesktopVideoPlayer::playVideo(const QString &url)
 {
+    mPlayer->audio()->setVolume(SettingsManager::getInstance()->getVolume());
+    mPlayer->audio()->setMute(SettingsManager::getInstance()->getMute());
+
     if (SettingsManager::getInstance()->getHwdec())
     {
         QStringList decoders = SettingsManager::getInstance()->getDecoders();
@@ -408,6 +411,7 @@ void DesktopVideoPlayer::playVideo(const QString &url)
     else
         mPlayer->setVideoDecoderPriority(QStringList() << QStringLiteral("FFmpeg"));
 
+
     auto mainWindow = mRenderer->widget();
     if (mainWindow->isHidden())
         mainWindow->show();
@@ -423,6 +427,41 @@ void DesktopVideoPlayer::playVideo(const QString &url)
     QVersionNumber win10Version(10, 0, 10240);
     bool legacyMode = mCurrentVersion < win10Version;
     ShowWindow(HWORKERW, legacyMode ? SW_HIDE : SW_SHOW);
+}
+
+void DesktopVideoPlayer::setVideoVolume(double volume)
+{
+    SettingsManager::getInstance()->setVolume(volume);
+
+    if (mPlayer->audio())
+    {
+        mPlayer->audio()->setVolume(volume);
+    }
+}
+
+void DesktopVideoPlayer::setMute(bool mute)
+{
+    SettingsManager::getInstance()->setMute(mute);
+
+    if (mPlayer->audio())
+    {
+        mPlayer->audio()->setMute(mute);
+        // Restore the volume
+        if (!mute)
+            mPlayer->audio()->setVolume(SettingsManager::getInstance()->getVolume());
+    }
+}
+
+void DesktopVideoPlayer::setVideoFillMode(VideoFillMode mode)
+{
+    if (mode == VideoFillMode::Stretch)
+        mRenderer->setOutAspectRatioMode(QtAV::VideoRenderer::RendererAspectRatio);
+    else if (mode == VideoFillMode::Contain)
+        mRenderer->setOutAspectRatioMode(QtAV::VideoRenderer::VideoAspectRatio);
+    else
+    {
+        mRenderer->setOutAspectRatio(3.0);
+    }
 }
 
 QStringList DesktopVideoPlayer::externalFilesToLoad(const QFileInfo &originalMediaFile, const QString &fileType)
