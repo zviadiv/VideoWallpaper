@@ -29,6 +29,21 @@ void VideoWallpaperViewController::setVideoVolume(double volume)
     }
 }
 
+double VideoWallpaperViewController::musicVolume() const
+{
+    return mMusicVolume;
+}
+
+void VideoWallpaperViewController::setMusicVolume(double volume)
+{
+    if (volume != mMusicVolume)
+    {
+        mMusicVolume = volume;
+        mDesktopPlayer->setMusicVolume(volume);
+        emit musicVolumeChanged();
+    }
+}
+
 bool VideoWallpaperViewController::mute() const
 {
     return mMute;
@@ -68,4 +83,19 @@ void VideoWallpaperViewController::playVideo()
 void VideoWallpaperViewController::removeVideo()
 {
     mDesktopPlayer->removeVideo();
+}
+
+void VideoWallpaperViewController::playMusic()
+{
+    qDebug() << "Attempting to start music playback: " << mMusicUrl;
+    // Use music volume settings
+    mDesktopPlayer->setMusicVolume(mMusicVolume);
+    mDesktopPlayer->playMusic(mMusicUrl);
+}
+
+void VideoWallpaperViewController::removeMusic()
+{
+    // Restore video volume settings
+    mDesktopPlayer->setVideoVolume(mVideoVolume);
+    mDesktopPlayer->removeMusic();
 }

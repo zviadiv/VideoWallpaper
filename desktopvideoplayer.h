@@ -26,7 +26,10 @@ public:
     void removeVideo();
     void playVideo(const QString &url);
     void setVideoVolume(double volume);
+    void setMusicVolume(double volume);
     void setMute(bool mute);
+    void playMusic(const QString &url);
+    void removeMusic();
 
     void setVideoFillMode(VideoFillMode mode);
 

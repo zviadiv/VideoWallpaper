@@ -14,6 +14,7 @@ class VideoWallpaperViewController : public QObject
     Q_PROPERTY(QString videoUrl MEMBER mVideoUrl NOTIFY videoUrlChanged)
     Q_PROPERTY(QString musicUrl MEMBER mMusicUrl NOTIFY musicUrlChanged)
     Q_PROPERTY(float videoVolume READ videoVolume WRITE setVideoVolume NOTIFY videoVolumeChanged)
+    Q_PROPERTY(float musicVolume READ musicVolume WRITE setMusicVolume NOTIFY musicVolumeChanged)
     Q_PROPERTY(bool mute READ mute WRITE setMute NOTIFY muteChanged)
     Q_PROPERTY(int videoFillMode READ videoFillMode WRITE setVideoFillMode NOTIFY videoFillModeChanged)
 
@@ -22,6 +23,9 @@ public:
 
     double videoVolume() const;
     void setVideoVolume(double volume);
+
+    double musicVolume() const;
+    void setMusicVolume(double volume);
 
     bool mute() const;
     void setMute(bool mute);
@@ -32,6 +36,7 @@ public:
 signals:
     void videoUrlChanged();
     void videoVolumeChanged();
+    void musicVolumeChanged();
     void musicUrlChanged();
     void muteChanged();
     void videoFillModeChanged();
@@ -39,12 +44,15 @@ signals:
 public slots:
     void playVideo();
     void removeVideo();
+    void playMusic();
+    void removeMusic();
 
 private:
     DesktopVideoPlayer *mDesktopPlayer;
     QString mVideoUrl;
     QString mMusicUrl;
     double mVideoVolume;
+    double mMusicVolume;
     bool mMute;
     int mVideoFillMode;
 };

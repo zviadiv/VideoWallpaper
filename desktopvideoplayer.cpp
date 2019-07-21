@@ -439,6 +439,11 @@ void DesktopVideoPlayer::setVideoVolume(double volume)
     }
 }
 
+void DesktopVideoPlayer::setMusicVolume(double volume)
+{
+    setVideoVolume(volume);
+}
+
 void DesktopVideoPlayer::setMute(bool mute)
 {
     SettingsManager::getInstance()->setMute(mute);
@@ -450,6 +455,17 @@ void DesktopVideoPlayer::setMute(bool mute)
         if (!mute)
             mPlayer->audio()->setVolume(SettingsManager::getInstance()->getVolume());
     }
+}
+
+void DesktopVideoPlayer::playMusic(const QString &url)
+{
+    if (mPlayer->isLoaded() && mPlayer->audio())
+        mPlayer->setExternalAudio(url);
+}
+
+void DesktopVideoPlayer::removeMusic()
+{
+    mPlayer->setExternalAudio("");
 }
 
 void DesktopVideoPlayer::setVideoFillMode(VideoFillMode mode)

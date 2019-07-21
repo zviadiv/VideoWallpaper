@@ -35,7 +35,7 @@ ApplicationWindow {
         nameFilters: [ "Audio files (*.mp3 *.wav)", "All files (*)" ]
         onAccepted: {
             console.log("Audio path: " + browseAudioDialog.fileUrls)
-            viewController.musicPath = browseAudioDialog.fileUrls[0]
+            viewController.musicUrl = browseAudioDialog.fileUrls[0]
             textInputMusicPath.text = browseAudioDialog.fileUrls[0]
         }
     }
@@ -297,6 +297,10 @@ ApplicationWindow {
         highlighted: false
         spacing: 0
         enabled: viewController.musicUrl.length != 0
+
+        onClicked: {
+            viewController.playMusic()
+        }
     }
 
     Button {
@@ -307,6 +311,10 @@ ApplicationWindow {
         height: 24
         text: qsTr("REMOVE")
         enabled: viewController.musicUrl.length != 0
+
+        onClicked: {
+            viewController.removeMusic()
+        }
     }
 
     Label {
@@ -324,7 +332,11 @@ ApplicationWindow {
         slider.y: 483
         slider.width: 144
         slider.height: 21
-        slider.value: 0
+        slider.value: 0.5
+
+        onValueChanged: {
+            viewController.musicVolume = slider.value
+        }
     }
 
     Rectangle {
