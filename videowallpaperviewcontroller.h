@@ -46,6 +46,7 @@ public slots:
     void removeVideo();
     void playMusic();
     void removeMusic();
+    void removeWallpaper();
 
 private:
     DesktopVideoPlayer *mDesktopPlayer;

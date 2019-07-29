@@ -99,3 +99,9 @@ void VideoWallpaperViewController::removeMusic()
     mDesktopPlayer->setVideoVolume(mVideoVolume);
     mDesktopPlayer->removeMusic();
 }
+
+void VideoWallpaperViewController::removeWallpaper()
+{
+    removeVideo();
+    removeMusic();
+}

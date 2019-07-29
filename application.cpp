@@ -16,7 +16,7 @@ Application::Application(int &argc, char **argv)
 {
     QCoreApplication::setApplicationName(QStringLiteral("Video Wallpaper"));
     QApplication::setApplicationDisplayName(QStringLiteral("Video Wallpaper"));
-    QCoreApplication::setApplicationVersion(QStringLiteral("1.0"));
+    QCoreApplication::setApplicationVersion(QStringLiteral("0.1"));
     QCoreApplication::setOrganizationName(QStringLiteral("undefined"));
     QCoreApplication::setOrganizationDomain(QStringLiteral("undefined"));
 

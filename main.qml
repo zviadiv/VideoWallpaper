@@ -9,7 +9,7 @@ ApplicationWindow {
     visible: true
     width: 640
     height: 600
-    title: qsTr("Video Wallpaper")
+    title: qsTr("Video Wallpaper ") + Qt.application.version + qsTr(" (pre-alpha)")
 
     onClosing: {
         console.log("Closing app window");
@@ -24,7 +24,6 @@ ApplicationWindow {
         onAccepted: {
             console.log("Video path: " + browseVideoDialog.fileUrls)
             viewController.videoUrl = browseVideoDialog.fileUrls[0]
-            textInputVideoPath.text = browseVideoDialog.fileUrls[0]
         }
     }
 
@@ -36,7 +35,6 @@ ApplicationWindow {
         onAccepted: {
             console.log("Audio path: " + browseAudioDialog.fileUrls)
             viewController.musicUrl = browseAudioDialog.fileUrls[0]
-            textInputMusicPath.text = browseAudioDialog.fileUrls[0]
         }
     }
 
@@ -80,7 +78,12 @@ ApplicationWindow {
                 y: 266
                 width: 242
                 height: 20
-                text: qsTr("Choose your video")
+                text: {
+                 if (viewController.videoUrl.length == 0)
+                     return qsTr("Choose your video")
+                 else
+                     return viewController.videoUrl
+                }
                 font.weight: Font.Thin
                 leftPadding: 5
                 padding: 0
@@ -267,7 +270,12 @@ ApplicationWindow {
         y: 447
         width: 242
         height: 20
-        text: qsTr("Choose your music")
+        text: {
+         if (viewController.musicUrl.length == 0)
+             return qsTr("Choose your music")
+         else
+             return viewController.musicUrl
+        }
         leftPadding: 5
         padding: 0
         font.pixelSize: 12
@@ -354,6 +362,12 @@ ApplicationWindow {
             width: 139
             height: 26
             text: qsTr("REMOVE WALLPAPER")
+
+            onClicked: {
+                viewController.videoUrl = ""
+                viewController.musicUrl = ""
+                viewController.removeWallpaper()
+            }
         }
 
         Button {
