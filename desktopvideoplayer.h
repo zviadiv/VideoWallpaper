@@ -34,7 +34,6 @@ public:
     void setVideoFillMode(VideoFillMode mode);
 
 private:
-    QStringList externalFilesToLoad(const QFileInfo &originalMediaFile, const QString &fileType);
     void moveToCenter(QWidget *window);
 
     bool mWindowMode = false;

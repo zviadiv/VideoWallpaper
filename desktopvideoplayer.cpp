@@ -12,6 +12,7 @@
 
 static HWND HWORKERW = nullptr;
 
+
 BOOL CALLBACK EnumWindowsProc(_In_ HWND hwnd, _In_ LPARAM lParam)
 {
     Q_UNUSED(lParam)
@@ -72,10 +73,7 @@ DesktopVideoPlayer::DesktopVideoPlayer(QObject *parent)
         mRenderer->setQuality(QtAV::VideoRenderer::QualityBest);
     else
         mRenderer->setQuality(QtAV::VideoRenderer::QualityFastest);
-    /*if (SettingsManager::getInstance()->getFitDesktop())
-        mRenderer->setOutAspectRatioMode(QtAV::VideoRenderer::RendererAspectRatio);
-    else
-        mRenderer->setOutAspectRatioMode(QtAV::VideoRenderer::VideoAspectRatio);*/
+
     QWidget *mainWindow = mRenderer->widget();
     const Qt::WindowFlags rendererWindowFlags = Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint | Qt::WindowDoesNotAcceptFocus;
     const QRect screenGeometry = QApplication::desktop()->screenGeometry(mainWindow);
@@ -96,34 +94,7 @@ DesktopVideoPlayer::DesktopVideoPlayer(QObject *parent)
     mPlayer->setRenderer(mRenderer);
     mPlayer->setRepeat(-1);
     PreferencesDialog preferencesDialog;
-    QObject::connect(mPlayer, SIGNAL(positionChanged(qint64)), &preferencesDialog, SIGNAL(updateVideoSlider(qint64)));
-    QObject::connect(mPlayer, &QtAV::AVPlayer::loaded,
-        [=, &preferencesDialog]
-        {
-            /*preferencesDialog.clearAllTracks();
-            preferencesDialog.updateVideoSliderUnit(mPlayer->notifyInterval());
-            preferencesDialog.updateVideoSliderRange(mPlayer->duration());
-            preferencesDialog.updateVideoSlider(mPlayer->position());
-            preferencesDialog.setSeekAreaEnabled(mPlayer->isSeekable());
-            preferencesDialog.setAudioAreaEnabled(mPlayer->audio());
-            preferencesDialog.updateVideoTracks(mPlayer->internalVideoTracks());
-            preferencesDialog.updateAudioTracks(mPlayer->internalAudioTracks(), false);
-            if (SettingsManager::getInstance()->getAudioAutoLoad())
-                preferencesDialog.updateAudioTracks(mPlayer->externalAudioTracks(), true);
-            */
-        });
-    QObject::connect(mPlayer, &QtAV::AVPlayer::notifyIntervalChanged,
-        [=, &preferencesDialog]
-        {
-            preferencesDialog.updateVideoSliderUnit(mPlayer->notifyInterval());
-            preferencesDialog.updateVideoSlider(mPlayer->position());
-        });
-    QObject::connect(mPlayer, &QtAV::AVPlayer::durationChanged,
-        [=, &preferencesDialog](qint64 duration)
-        {
-            /*preferencesDialog.updateVideoSliderRange(duration);
-            preferencesDialog.updateVideoSlider(mPlayer->position());*/
-        });
+
     QMenu trayMenu;
     QAction *optionsAction = trayMenu.addAction(QObject::tr("Preferences"));
     QObject::connect(optionsAction, &QAction::triggered,
@@ -159,15 +130,9 @@ DesktopVideoPlayer::DesktopVideoPlayer(QObject *parent)
     QAction *muteAction = trayMenu.addAction(QObject::tr("Mute"));
     muteAction->setCheckable(true);
     QObject::connect(muteAction, &QAction::triggered,
-        [=,&preferencesDialog](bool checked)
+        [this](bool checked)
         {
-            if (mPlayer->audio())
-            {
-                muteAction->setChecked(checked);
-                SettingsManager::getInstance()->setMute(checked);
-                preferencesDialog.updateVolumeArea();
-                mPlayer->audio()->setMute(checked);
-            }
+            setMute(!checked);
         });
     trayMenu.addSeparator();
     trayMenu.addAction(QObject::tr("Exit"), qApp, &QApplication::closeAllWindows);
@@ -176,38 +141,12 @@ DesktopVideoPlayer::DesktopVideoPlayer(QObject *parent)
     trayIcon.setToolTip(QStringLiteral("Video Wallpaper"));
     trayIcon.setContextMenu(&trayMenu);
     trayIcon.show();
-    /*if (mPlayer->audio())
-    {
-        mPlayer->audio()->setVolume(settingsManager::getInstance()->getVolume()));
-        mPlayer->audio()->setMute(SettingsManager::getInstance()->getMute());
-        muteAction->setCheckable(true);
-        muteAction->setChecked(SettingsManager::getInstance()->getMute());
-    }
-    else
-    {
-        muteAction->setCheckable(false);
-        muteAction->setEnabled(false);
-        preferencesDialog.setVolumeAreaEnabled(false);
-    }*/
     QObject::connect(&trayIcon, &QSystemTrayIcon::activated,
         [=](QSystemTrayIcon::ActivationReason reason)
         {
             if (reason != QSystemTrayIcon::Context)
                 optionsAction->triggered();
         });;
-    QObject::connect(&preferencesDialog, SIGNAL(pause()), pauseAction, SIGNAL(triggered()));
-    QObject::connect(&preferencesDialog, &PreferencesDialog::volumeChanged,
-        [=](unsigned int volume)
-        {
-            if (mPlayer->audio())
-                mPlayer->audio()->setVolume(volume);
-        });
-    QObject::connect(&preferencesDialog, &PreferencesDialog::muteChanged,
-        [=](bool mute)
-        {
-            if (mPlayer->audio())
-                muteAction->triggered(mute);
-        });
     QObject::connect(&preferencesDialog, &PreferencesDialog::autostartChanged,
         [=](bool enabled)
         {
@@ -215,40 +154,6 @@ DesktopVideoPlayer::DesktopVideoPlayer(QObject *parent)
                 SettingsManager::getInstance()->regAutostart();
             else
                 SettingsManager::getInstance()->unregAutostart();
-        });
-    QObject::connect(&preferencesDialog, &PreferencesDialog::seekBySlider,
-        [=](qint64 value)
-        {
-            if (mPlayer->isLoaded())
-                mPlayer->seek(value);
-        });
-    QObject::connect(&preferencesDialog, &PreferencesDialog::pictureRatioChanged,
-        [=](bool fitDesktop)
-        {
-            if (fitDesktop)
-                mRenderer->setOutAspectRatioMode(QtAV::VideoRenderer::RendererAspectRatio);
-            else
-                mRenderer->setOutAspectRatioMode(QtAV::VideoRenderer::VideoAspectRatio);
-        });
-    QObject::connect(&preferencesDialog, &PreferencesDialog::videoTrackChanged,
-        [this](unsigned int id)
-        {
-            if (mPlayer->isLoaded())
-                if (id != mPlayer->currentVideoStream())
-                    mPlayer->setVideoStream(id);
-        });
-    QObject::connect(&preferencesDialog, &PreferencesDialog::audioTrackChanged,
-        [=](unsigned int id)
-        {
-            if (mPlayer->isLoaded())
-                if (id != mPlayer->currentAudioStream())
-                    mPlayer->setAudioStream(id);
-        });
-    QObject::connect(&preferencesDialog, &PreferencesDialog::audioOpened,
-        [=](const QString &audioPath)
-        {
-            if (mPlayer->isLoaded() && mPlayer->audio())
-                mPlayer->setExternalAudio(audioPath);
         });
     QObject::connect(&preferencesDialog, &PreferencesDialog::rendererChanged,
         [=](QtAV::VideoRendererId rendererId) mutable
@@ -338,6 +243,7 @@ DesktopVideoPlayer::DesktopVideoPlayer(QObject *parent)
     }
     else
         optionsAction->triggered();
+
     if (!mWindowMode)
     {
         QVersionNumber win10Version(10, 0, 10240); // Windows 10 Version 1507
@@ -360,6 +266,20 @@ DesktopVideoPlayer::~DesktopVideoPlayer()
 {
     removeVideo();
 }
+
+void DesktopVideoPlayer::moveToCenter(QWidget *window)
+{
+    if (!window)
+        return;
+    unsigned int screenWidth = QApplication::desktop()->screenGeometry(window).width();
+    unsigned int screenHeight = QApplication::desktop()->screenGeometry(window).height();
+    unsigned int windowWidth = window->width();
+    unsigned int windowHeight = window->height();
+    unsigned int newX = (screenWidth - windowWidth) / 2;
+    unsigned int newY = (screenHeight - windowHeight) / 2;
+    window->move(newX, newY);
+}
+
 
 void DesktopVideoPlayer::removeVideo()
 {
@@ -478,48 +398,4 @@ void DesktopVideoPlayer::setVideoFillMode(VideoFillMode mode)
     {
         mRenderer->setOutAspectRatio(3.0);
     }
-}
-
-QStringList DesktopVideoPlayer::externalFilesToLoad(const QFileInfo &originalMediaFile, const QString &fileType)
-{
-    if (!originalMediaFile.exists() || originalMediaFile.isDir() || fileType.isEmpty())
-        return QStringList();
-    QDir subDir(originalMediaFile.absoluteDir());
-    QFileInfoList fileList = subDir.entryInfoList(QDir::Files | QDir::NoSymLinks, QDir::Name);
-    if (fileList.count() < 2)
-        return QStringList();
-    const QString fileBaseName = originalMediaFile.baseName().toLower();
-    QStringList newFileList;
-    for (auto& fi : fileList)
-    {
-        if (fi.absoluteFilePath() == originalMediaFile.absoluteFilePath())
-            continue;
-        const QString newBaseName = fi.baseName().toLower();
-        if (newBaseName == fileBaseName)
-            if (fileType.toLower() == QLatin1String("sub"))
-            {
-                if (fi.suffix().toLower() == QLatin1String("ass")
-                        || fi.suffix().toLower() == QLatin1String("ssa")
-                        || fi.suffix().toLower() == QLatin1String("srt")
-                        || fi.suffix().toLower() == QLatin1String("sub"))
-                    newFileList.append(QDir::toNativeSeparators(fi.absoluteFilePath()));
-            }
-            else if (fileType.toLower() == QLatin1String("audio"))
-                if (fi.suffix().toLower() == QLatin1String("mka"))
-                    newFileList.append(QDir::toNativeSeparators(fi.absoluteFilePath()));
-    }
-    return newFileList;
-}
-
-void DesktopVideoPlayer::moveToCenter(QWidget *window)
-{
-    if (!window)
-        return;
-    unsigned int screenWidth = QApplication::desktop()->screenGeometry(window).width();
-    unsigned int screenHeight = QApplication::desktop()->screenGeometry(window).height();
-    unsigned int windowWidth = window->width();
-    unsigned int windowHeight = window->height();
-    unsigned int newX = (screenWidth - windowWidth) / 2;
-    unsigned int newY = (screenHeight - windowHeight) / 2;
-    window->move(newX, newY);
 }
