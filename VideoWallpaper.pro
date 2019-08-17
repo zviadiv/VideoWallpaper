@@ -7,7 +7,7 @@ contains(QT_ARCH, x86_64) {
     TARGET = $$join(TARGET,,,64)
 }
 CONFIG(debug, debug|release): TARGET = $$join(TARGET,,,d)
-QT += quick gui widgets av avwidgets
+QT += quick gui widgets svg av avwidgets
 TEMPLATE = app
 DEFINES += QT_DEPRECATED_WARNINGS QT_DISABLE_DEPRECATED_BEFORE=0x050603
 CONFIG *= c++11

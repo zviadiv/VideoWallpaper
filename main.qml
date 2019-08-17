@@ -7,8 +7,8 @@ import QtQuick.Dialogs 1.0
 ApplicationWindow {
     id:root
     visible: true
-    width: 640
-    height: 600
+    width: 710
+    height: 560
     title: qsTr("Video Wallpaper ") + Qt.application.version + qsTr(" (pre-alpha)")
 
     onClosing: {
@@ -42,232 +42,234 @@ ApplicationWindow {
         id: tabBar
         x: 0
         y: 176
-        width: 640
+        width: 710
         height: 216
         position: TabBar.Header
 
-        TabButton {
-            width: 100
-            text: qsTr("Monitor 1")
-            font.bold: true
+        Repeater {
+            model: Qt.application.screens
+
+            TabButton {
+                width: 100
+                text: qsTr("Monitor " + (index+1))
+                font.bold: true
+            }
         }
     }
 
     StackLayout {
         anchors.rightMargin: 0
-        anchors.bottomMargin: 208
+        anchors.bottomMargin: 168
         anchors.fill: parent
         currentIndex: tabBar.currentIndex
 
-        Item {
-            id: firstTab
+        Repeater {
+            model: Qt.application.screens
 
-            Label {
-                id: label
-                x: 56
-                y: 241
-                width: 111
-                height: 19
-                text: qsTr("VIDEO SETTINGS")
-                font.bold: true
-            }
+            Item {
+                id: tab
 
-            TextInput {
-                id: textInputVideoPath
-                x: 56
-                y: 266
-                width: 242
-                height: 20
-                text: {
-                 if (viewController.videoUrl.length == 0)
-                     return qsTr("Choose your video")
-                 else
-                     return viewController.videoUrl
-                }
-                font.weight: Font.Thin
-                leftPadding: 5
-                padding: 0
-                font.pixelSize: 12
-            }
-
-            Button {
-                id: buttonBrowseVideo
-                x: 299
-                y: 264
-                width: 100
-                height: 24
-                text: qsTr("BROWSE")
-
-                onClicked: {
-                    browseVideoDialog.open()
-                }
-            }
-
-            Button {
-                id: buttonApplyVideo
-                x: 405
-                y: 264
-                width: 100
-                height: 24
-                text: qsTr("APPLY")
-                spacing: 0
-                highlighted: false
-                enabled: viewController.videoUrl.length != 0
-
-                onClicked: {
-                    viewController.playVideo()
-                }
-            }
-
-            Button {
-                id: buttonRemoveVideo
-                x: 511
-                y: 264
-                width: 100
-                height: 24
-                text: qsTr("REMOVE")
-                enabled: viewController.videoUrl.length != 0
-
-                onClicked: {
-                    viewController.removeVideo()
-                }
-            }
-
-            Label {
-                id: label1
-                x: 56
-                y: 313
-                width: 111
-                height: 0
-                text: qsTr("VIDEO SIZE")
-            }
-
-            Label {
-                id: label2
-                x: 56
-                y: 347
-                width: 111
-                height: 0
-                text: qsTr("VIDEO POSITION")
-            }
-
-            ComboBox {
-                id: comboBoxVideoSize
-                x: 152
-                y: 308
-                width: 99
-                height: 28
-                model: [ "Cover", "Contain", "Stretch" ]
-
-                enum VideoFillMode
-                {
-                    Cover = 0, Contain, Stretch
+                Label {
+                    id: label
+                    x: 56
+                    y: 241
+                    width: 111
+                    height: 19
+                    text: qsTr("VIDEO SETTINGS")
+                    font.bold: true
                 }
 
-                onCurrentIndexChanged: {
-                    switch (comboBoxVideoSize.currentIndex)
-                    {
-                    case 0:
-                        viewController.videoFillMode = Constants.VideoFillMode.Cover
-                        break;
-                    case 1:
-                        viewController.videoFillMode = Constants.VideoFillMode.Contain
-                        break;
-                    case 2:
-                        viewController.videoFillMode = Constants.VideoFillMode.Stretch
-                        break;
+                Row {
+                    x: 56
+                    y: 266
+                    width: 593
+                    height: 28
+                    spacing: 5
+                    TextInput {
+                        id: textInputVideoPath
+                        x: 56
+                        y: 0
+                        width: 242
+                        height: 20
+                        text: {
+                         if (viewController.videoUrl.length == 0)
+                             return qsTr("Choose your video")
+                         else
+                             return viewController.videoUrl
+                        }
+                        font.weight: Font.Thin
+                        leftPadding: 5
+                        padding: 0
+                        font.pixelSize: 12
+                    }
+
+                    Button {
+                        id: buttonBrowseVideo
+                        x: 299
+                        y: 0
+                        width: 100
+                        height: 24
+                        text: qsTr("BROWSE")
+
+                        onClicked: {
+                            browseVideoDialog.open()
+                        }
+                    }
+
+                    Button {
+                        id: buttonApplyVideo
+                        x: 405
+                        y: 0
+                        width: 100
+                        height: 24
+                        text: qsTr("APPLY")
+                        spacing: 0
+                        highlighted: false
+                        enabled: viewController.videoUrl.length != 0
+
+                        onClicked: {
+                            viewController.playVideo()
+                        }
+                    }
+
+                    Button {
+                        id: buttonRemoveVideo
+                        x: 511
+                        y: 0
+                        width: 100
+                        height: 24
+                        text: qsTr("REMOVE")
+                        enabled: viewController.videoUrl.length != 0
+
+                        onClicked: {
+                            viewController.removeVideo()
+                        }
                     }
                 }
-            }
 
-            CustomSlider {
-                id: sliderVideoPosition
-                slider.x: 140
-                slider.y: 347
-                slider.width: 144
-                slider.height: 21
-                slider.value: 0
-            }
+                Label {
+                    id: label1
+                    x: 56
+                    y: 313
+                    width: 111
+                    height: 0
+                    text: qsTr("VIDEO SIZE")
+                }
 
-            CustomSlider {
-                id: sliderVideoOverlay
-                slider.x: 444
-                slider.y: 309
-                slider.width: 144
-                slider.height: 21
-                slider.value: 0
-                enabled: checkBoxVideoOverlay.checked
-            }
+                Label {
+                    id: label2
+                    x: 56
+                    y: 347
+                    width: 111
+                    height: 0
+                    text: qsTr("VIDEO POSITION")
+                }
 
-            CustomSlider {
-                id: sliderVideoVolume
-                slider.x: 444
-                slider.y: 348
-                slider.width: 144
-                slider.height: 21
-                slider.value: 0.5
-                enabled: checkBoxVideoVolume.checked
+                ComboBox {
+                    id: comboBoxVideoSize
+                    x: 152
+                    y: 308
+                    width: 127
+                    height: 28
+                    model: [ "Cover", "Contain", "Stretch" ]
 
-                onValueChanged: {
-                    viewController.videoVolume = slider.value
+                    enum VideoFillMode
+                    {
+                        Cover = 0, Contain, Stretch
+                    }
+
+                    onCurrentIndexChanged: {
+                        switch (comboBoxVideoSize.currentIndex)
+                        {
+                        case 0:
+                            viewController.videoFillMode = Constants.VideoFillMode.Cover
+                            break;
+                        case 1:
+                            viewController.videoFillMode = Constants.VideoFillMode.Contain
+                            break;
+                        case 2:
+                            viewController.videoFillMode = Constants.VideoFillMode.Stretch
+                            break;
+                        }
+                    }
+                }
+
+                CustomSlider {
+                    id: sliderVideoPosition
+                    slider.x: 140
+                    slider.y: 347
+                    slider.width: 144
+                    slider.height: 21
+                    slider.value: 0
+                }
+
+                CustomSlider {
+                    id: sliderVideoOverlay
+                    slider.x: 444
+                    slider.y: 309
+                    slider.width: 144
+                    slider.height: 21
+                    slider.value: 0
+                    enabled: checkBoxVideoOverlay.checked
+                }
+
+                CustomSlider {
+                    id: sliderVideoVolume
+                    slider.x: 444
+                    slider.y: 348
+                    slider.width: 144
+                    slider.height: 21
+                    slider.value: 0.5
+                    enabled: checkBoxVideoVolume.checked
+
+                    onValueChanged: {
+                        viewController.videoVolume = slider.value
+                    }
+                }
+
+                CheckBox {
+                    id: checkBoxVideoVolume
+                    x: 317
+                    y: 338
+                    text: qsTr("VIDEO VOLUME")
+                    checked: false
+
+                    onCheckedChanged: {
+                        viewController.mute = !checkBoxVideoVolume.checked
+                    }
+                }
+
+                CheckBox {
+                    id: checkBoxVideoOverlay
+                    x: 317
+                    y: 300
+                    text: qsTr("VIDEO OVERLAY")
+                    checked: false
+                }
+
+                AllScreens {
+                    id: rectangle
+                    anchors.right: parent.horizontalCenter
+                    y: 10
+                    width: 215
+                    height: 122
                 }
             }
-
-            CheckBox {
-                id: checkBoxVideoVolume
-                x: 317
-                y: 338
-                text: qsTr("VIDEO VOLUME")
-                checked: false
-
-                onCheckedChanged: {
-                    viewController.mute = !checkBoxVideoVolume.checked
-                }
-            }
-
-            CheckBox {
-                id: checkBoxVideoOverlay
-                x: 317
-                y: 300
-                text: qsTr("VIDEO OVERLAY")
-                checked: false
-            }
-
-            Rectangle {
-                id: rectangle
-                x: 213
-                y: 28
-                width: 215
-                height: 122
-                color: "#495a94"
-            }
-
-            Label {
-                id: label5
-                x: 265
-                y: 8
-                width: 111
-                height: 19
-                text: qsTr("1 MONITOR DETECTED")
-                horizontalAlignment: Text.AlignHCenter
-                font.bold: true
-            }
-
         }
     }
 
     Label {
         id: label3
-        x: 57
-        y: 422
+        x: 42
+        y: 398
         text: qsTr("MUSIC SETTINGS")
         font.bold: true
     }
 
     TextInput {
         id: textInputMusicPath
-        x: 56
-        y: 447
+        x: 41
+        y: 423
         width: 242
         height: 20
         text: {
@@ -284,8 +286,8 @@ ApplicationWindow {
 
     Button {
         id: buttonBrowseMusic
-        x: 299
-        y: 445
+        x: 284
+        y: 421
         width: 100
         height: 24
         text: qsTr("BROWSE")
@@ -297,8 +299,8 @@ ApplicationWindow {
 
     Button {
         id: buttonApplyMusic
-        x: 405
-        y: 445
+        x: 390
+        y: 421
         width: 100
         height: 24
         text: qsTr("APPLY")
@@ -313,8 +315,8 @@ ApplicationWindow {
 
     Button {
         id: buttonRemoveMusic
-        x: 511
-        y: 445
+        x: 496
+        y: 421
         width: 100
         height: 24
         text: qsTr("REMOVE")
@@ -327,8 +329,8 @@ ApplicationWindow {
 
     Label {
         id: label4
-        x: 194
-        y: 488
+        x: 179
+        y: 464
         width: 111
         height: 0
         text: qsTr("MUSIC VOLUME")
@@ -336,6 +338,8 @@ ApplicationWindow {
 
     CustomSlider {
         id: sliderMusicVolume
+        x: -15
+        y: -24
         slider.x: 273
         slider.y: 483
         slider.width: 144
@@ -349,19 +353,24 @@ ApplicationWindow {
 
     Rectangle {
         id: footerRectangle
-        x: 0
-        y: 519
-        width: 640
-        height: 81
+        y: 486
+        height: 74
         color: "#495a94"
+        anchors.right: parent.right
+        anchors.rightMargin: 0
+        anchors.left: parent.left
+        anchors.leftMargin: 0
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: 0
 
         Button {
             id: buttonRemoveWallpaper
-            x: 26
             y: 28
             width: 139
             height: 26
             text: qsTr("REMOVE WALLPAPER")
+            anchors.left: parent.left
+            anchors.leftMargin: 30
 
             onClicked: {
                 viewController.videoUrl = ""
@@ -372,11 +381,33 @@ ApplicationWindow {
 
         Button {
             id: buttonSaveWallpaperAndExit
-            x: 387
+            x: 455
             y: 28
             width: 226
             height: 26
             text: qsTr("SAVE WALLPAPER && CLOSE WINDOW")
+            anchors.right: parent.right
+            anchors.rightMargin: 30
         }
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*##^## Designer {
+    D{i:29;anchors_height:81;anchors_width:1200;anchors_x:0;anchors_y:865}D{i:31;anchors_x:26}
+D{i:30;anchors_height:66;anchors_width:710;anchors_x:0;anchors_y:494}
+}
+ ##^##*/

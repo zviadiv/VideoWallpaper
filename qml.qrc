@@ -3,5 +3,25 @@
         <file>main.qml</file>
         <file>CustomSlider.qml</file>
         <file>Constants.qml</file>
+        <file>resources/icons/icon-arrow-down.svg</file>
+        <file>resources/icons/icon-settings.svg</file>
+        <file>resources/icons/icon-video-overlay.svg</file>
+        <file>resources/icons/icon-video-position.svg</file>
+        <file>resources/icons/icon-video-size.svg</file>
+        <file>resources/icons/icon-video-volume.svg</file>
+        <file>resources/icons/screens-1.svg</file>
+        <file>resources/icons/screens-2.svg</file>
+        <file>resources/icons/screens-3.svg</file>
+        <file>AllScreens.qml</file>
+        <file>CustomButton.qml</file>
+        <file>resources/icons/icon-video-size.png</file>
+        <file>resources/icons/screens-1.png</file>
+        <file>resources/icons/screens-2.png</file>
+        <file>resources/icons/screens-3.png</file>
+        <file>resources/icons/icon-arrow-down.png</file>
+        <file>resources/icons/icon-settings.png</file>
+        <file>resources/icons/icon-video-overlay.png</file>
+        <file>resources/icons/icon-video-position.png</file>
+        <file>resources/icons/icon-video-volume.png</file>
     </qresource>
 </RCC>
