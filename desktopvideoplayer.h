@@ -17,28 +17,51 @@ enum class VideoFillMode
     Cover = 0, Contain, Stretch
 };
 
+enum class ScreenMode
+{
+    Unique = 0, Shared, Copy
+};
+
 class DesktopVideoPlayer : public QObject
 {
 public:
     DesktopVideoPlayer(QObject *parent = nullptr);
     ~DesktopVideoPlayer();
 
-    void removeVideo();
-    void playVideo(const QString &url);
-    void setVideoVolume(double volume);
+    void removeVideo(int screenIndex);
+    void playVideo(int screenIndex, const QString &url);
+
+    double videoVolume(int screenIndex);
+    void setVideoVolume(int screenIndex, double volume);
+
     void setMusicVolume(double volume);
-    void setMute(bool mute);
+
+    bool getMute(int screenIndex) const;
+    void setMute(int screenIndex, bool mute);
+
     void playMusic(const QString &url);
     void removeMusic();
 
-    void setVideoFillMode(VideoFillMode mode);
+    void setVideoFillMode(int screenIndex, VideoFillMode mode);
+    void setScreenMode(ScreenMode mode);
 
 private:
+    void createSystemTrayMenu();
     void moveToCenter(QWidget *window);
 
+    using PlayerPtr = QSharedPointer<QtAV::AVPlayer>;
+    using RendererPtr = QSharedPointer<QtAV::VideoRenderer>;
+
+    void createPlayers();
+    RendererPtr createVideoRenderer();
+    void pauseAllPlayers(bool pause);
+    void muteAllPlayers(bool mute);
+
+    QVector<PlayerPtr> mPlayers;
+    QVector<RendererPtr> mRenderers;
+
     bool mWindowMode = false;
-    QtAV::AVPlayer* mPlayer;
-    QtAV::VideoRenderer* mRenderer;
+
     QVersionNumber mCurrentVersion;
 };
 

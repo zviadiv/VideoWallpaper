@@ -23,5 +23,6 @@
         <file>resources/icons/icon-video-overlay.png</file>
         <file>resources/icons/icon-video-position.png</file>
         <file>resources/icons/icon-video-volume.png</file>
+        <file>appicon.ico</file>
     </qresource>
 </RCC>

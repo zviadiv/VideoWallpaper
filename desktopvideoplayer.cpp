@@ -1,6 +1,7 @@
 #include "desktopvideoplayer.h"
 #include "settingsmanager.h"
 #include "preferencesdialog.h"
+#include "application.h"
 
 #include <QApplication>
 #include <QDesktopWidget>
@@ -53,100 +54,13 @@ DesktopVideoPlayer::DesktopVideoPlayer(QObject *parent)
         SettingsManager::getInstance()->unregAutostart();
     QtAV::setFFmpegLogLevel("warn");
     QtAV::setLogLevel(QtAV::LogAll);
-    mRenderer = QtAV::VideoRenderer::create(SettingsManager::getInstance()->getRenderer());
-    if (!mRenderer || !mRenderer->isAvailable() || !mRenderer->widget())
-    {
-        QMessageBox::critical(nullptr, QStringLiteral("Video Wallpaper"), QObject::tr("Current renderer is not available on your platform!"));
-        qApp->quit();
-    }
-    const QtAV::VideoDecoderId vid = mRenderer->id();
-    if (vid == QtAV::VideoRendererId_GLWidget
-            || vid == QtAV::VideoRendererId_GLWidget2
-            || vid == QtAV::VideoRendererId_OpenGLWidget)
-        mRenderer->forcePreferredPixelFormat(true);
-    else
-        mRenderer->forcePreferredPixelFormat(false);
-    QString videoQuality = SettingsManager::getInstance()->getVideoQuality();
-    if (videoQuality == QStringLiteral("default"))
-        mRenderer->setQuality(QtAV::VideoRenderer::QualityDefault);
-    else if (videoQuality == QStringLiteral("best"))
-        mRenderer->setQuality(QtAV::VideoRenderer::QualityBest);
-    else
-        mRenderer->setQuality(QtAV::VideoRenderer::QualityFastest);
 
-    QWidget *mainWindow = mRenderer->widget();
-    const Qt::WindowFlags rendererWindowFlags = Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint | Qt::WindowDoesNotAcceptFocus;
-    const QRect screenGeometry = QApplication::desktop()->screenGeometry(mainWindow);
-    if (!mWindowMode)
-    {
-        mainWindow->setWindowFlags(rendererWindowFlags);
-        // Why is Direct2D image too large?
-        mainWindow->setGeometry(screenGeometry);
-    }
-    else
-    {
-        mainWindow->resize(QSize(1280, 720));
-        moveToCenter(mainWindow);
-    }
-    mainWindow->setWindowIcon(QIcon(QStringLiteral(":/bee.ico")));
-    mainWindow->setWindowTitle(QStringLiteral("Video Wallpaper"));
-    mPlayer = new QtAV::AVPlayer(this);
-    mPlayer->setRenderer(mRenderer);
-    mPlayer->setRepeat(-1);
-    PreferencesDialog preferencesDialog;
+    createPlayers();
 
-    QMenu trayMenu;
-    QAction *optionsAction = trayMenu.addAction(QObject::tr("Preferences"));
-    QObject::connect(optionsAction, &QAction::triggered,
-        [=, &preferencesDialog]
-        {
-            if (preferencesDialog.isHidden())
-            {
-                moveToCenter(&preferencesDialog);
-                preferencesDialog.show();
-            }
-            if (!preferencesDialog.isActiveWindow())
-                preferencesDialog.setWindowState(preferencesDialog.windowState() & ~Qt::WindowMinimized);
-            if (!preferencesDialog.isActiveWindow())
-            {
-                preferencesDialog.raise();
-                preferencesDialog.activateWindow();
-            }
-        });
-    trayMenu.addSeparator();
-    QAction *playAction = trayMenu.addAction(QObject::tr("Play"));
-    QObject::connect(playAction, &QAction::triggered,
-        [=, &preferencesDialog]
-        {
-            preferencesDialog.urlChanged(QString());
-        });
-    QAction *pauseAction = trayMenu.addAction(QObject::tr("Pause"));
-    QObject::connect(pauseAction, &QAction::triggered,
-        [=]
-        {
-            if (mPlayer->isPlaying())
-                mPlayer->pause();
-        });
-    QAction *muteAction = trayMenu.addAction(QObject::tr("Mute"));
-    muteAction->setCheckable(true);
-    QObject::connect(muteAction, &QAction::triggered,
-        [this](bool checked)
-        {
-            setMute(!checked);
-        });
-    trayMenu.addSeparator();
-    trayMenu.addAction(QObject::tr("Exit"), qApp, &QApplication::closeAllWindows);
-    QSystemTrayIcon trayIcon;
-    trayIcon.setIcon(QIcon(QStringLiteral(":/bee.ico")));
-    trayIcon.setToolTip(QStringLiteral("Video Wallpaper"));
-    trayIcon.setContextMenu(&trayMenu);
-    trayIcon.show();
-    QObject::connect(&trayIcon, &QSystemTrayIcon::activated,
-        [=](QSystemTrayIcon::ActivationReason reason)
-        {
-            if (reason != QSystemTrayIcon::Context)
-                optionsAction->triggered();
-        });;
+    createSystemTrayMenu();
+
+    /*PreferencesDialog preferencesDialog;
+
     QObject::connect(&preferencesDialog, &PreferencesDialog::autostartChanged,
         [=](bool enabled)
         {
@@ -179,7 +93,7 @@ DesktopVideoPlayer::DesktopVideoPlayer(QObject *parent)
                         newRenderer->widget()->resize(QSize(1280, 720));
                         moveToCenter(newRenderer->widget());
                     }
-                    newRenderer->widget()->setWindowIcon(QIcon(QStringLiteral(":/bee.ico")));
+                    newRenderer->widget()->setWindowIcon(QIcon(QStringLiteral(":/appicon.ico")));
                     newRenderer->widget()->setWindowTitle(QStringLiteral("Dynamic Desktop"));
                     mPlayer->setRenderer(newRenderer);
                     const QtAV::VideoRendererId videoRendererId = newRenderer->id();
@@ -235,14 +149,35 @@ DesktopVideoPlayer::DesktopVideoPlayer(QObject *parent)
             else
                 mRenderer->setQuality(QtAV::VideoRenderer::QualityFastest);
         });
+
     if (!SettingsManager::getInstance()->getUrl().isEmpty())
     {
         if (mainWindow->isHidden())
             mainWindow->show();
-        preferencesDialog.urlChanged(SettingsManager::getInstance()->getUrl());
+    }*/
+}
+
+DesktopVideoPlayer::~DesktopVideoPlayer()
+{
+    for (int i = 0; i < mPlayers.size(); i++)
+        removeVideo(i);
+}
+
+void DesktopVideoPlayer::createPlayers()
+{
+    mRenderers.clear();
+    mPlayers.clear();
+
+    for (int i = 0; i < QApplication::screens().size(); i++)
+    {
+        auto renderer = createVideoRenderer();
+        mRenderers.push_back(renderer);
+
+        PlayerPtr player(new QtAV::AVPlayer());
+        player->setRenderer(renderer.get());
+        player->setRepeat(-1);
+        mPlayers.push_back(player);
     }
-    else
-        optionsAction->triggered();
 
     if (!mWindowMode)
     {
@@ -258,13 +193,120 @@ DesktopVideoPlayer::DesktopVideoPlayer(QObject *parent)
         // in this problem, I don't know why. It's strange.
         HWND hwnd = getWorkerW(mCurrentVersion < win10Version);
         if (hwnd != nullptr)
-            SetParent(reinterpret_cast<HWND>(mainWindow->winId()), hwnd);
+            SetParent(reinterpret_cast<HWND>(mPlayers[0]->renderer()->widget()->winId()), hwnd);
     }
 }
 
-DesktopVideoPlayer::~DesktopVideoPlayer()
+DesktopVideoPlayer::RendererPtr DesktopVideoPlayer::createVideoRenderer()
 {
-    removeVideo();
+    auto renderer = QtAV::VideoRenderer::create(SettingsManager::getInstance()->getRenderer());
+    if (!renderer || !renderer->isAvailable() || !renderer->widget())
+    {
+        QMessageBox::critical(nullptr, QStringLiteral("Video Wallpaper"), QObject::tr("Current renderer is not available on your platform!"));
+        qApp->quit();
+    }
+    const QtAV::VideoDecoderId vid = renderer->id();
+    if (vid == QtAV::VideoRendererId_GLWidget
+            || vid == QtAV::VideoRendererId_GLWidget2
+            || vid == QtAV::VideoRendererId_OpenGLWidget)
+        renderer->forcePreferredPixelFormat(true);
+    else
+        renderer->forcePreferredPixelFormat(false);
+    QString videoQuality = SettingsManager::getInstance()->getVideoQuality();
+    if (videoQuality == QStringLiteral("default"))
+        renderer->setQuality(QtAV::VideoRenderer::QualityDefault);
+    else if (videoQuality == QStringLiteral("best"))
+        renderer->setQuality(QtAV::VideoRenderer::QualityBest);
+    else
+        renderer->setQuality(QtAV::VideoRenderer::QualityFastest);
+
+    QWidget *mainWindow = renderer->widget();
+    const Qt::WindowFlags rendererWindowFlags = Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint | Qt::WindowDoesNotAcceptFocus;
+    const QRect screenGeometry = QApplication::desktop()->screenGeometry(mainWindow);
+    if (!mWindowMode)
+    {
+        mainWindow->setWindowFlags(rendererWindowFlags);
+        // Why is Direct2D image too large?
+        mainWindow->setGeometry(screenGeometry);
+    }
+    else
+    {
+        mainWindow->resize(QSize(1280, 720));
+        moveToCenter(mainWindow);
+    }
+    mainWindow->setWindowIcon(QIcon(QStringLiteral(":/appicon.ico")));
+    mainWindow->setWindowTitle(QStringLiteral("Video Wallpaper"));
+
+    return RendererPtr(renderer);
+}
+
+void DesktopVideoPlayer::pauseAllPlayers(bool pause)
+{
+    for (auto &player : mPlayers)
+    {
+        if (player->isPlaying() == pause)
+            player->pause(pause);
+    }
+}
+
+void DesktopVideoPlayer::muteAllPlayers(bool mute)
+{
+    for (auto &player : mPlayers)
+    {
+        if (player->audio())
+            player->audio()->setMute(mute);
+    }
+}
+
+void DesktopVideoPlayer::createSystemTrayMenu()
+{
+    QMenu trayMenu;
+
+    QAction *removeAction = trayMenu.addAction(QObject::tr("Remove Wallpaper"));
+    QObject::connect(removeAction, &QAction::triggered, []
+    {
+
+    });
+
+    QAction *changeAction = trayMenu.addAction(QObject::tr("Change Wallpaper"));
+    QObject::connect(changeAction, &QAction::triggered, []
+    {
+        if (!Application::instance()->mainWindowVisible())
+        {
+            Application::instance()->showMainWindow(true, true);
+        }
+    });
+
+    trayMenu.addSeparator();
+    QAction *playPauseAction = trayMenu.addAction(mPlayers[0]->isPlaying() ?
+                QObject::tr("Pause Wallpaper") : QObject::tr("Play Wallpaper"));
+    QObject::connect(playPauseAction, &QAction::triggered, [this]
+    {
+        bool pause = mPlayers[0]->isPlaying();
+        pauseAllPlayers(pause);
+    });
+
+    QAction *muteAction = trayMenu.addAction(QObject::tr("Mute Wallpaper"));
+    muteAction->setCheckable(true);
+    QObject::connect(muteAction, &QAction::triggered, [this](bool checked)
+    {
+        muteAllPlayers(!checked);
+    });
+
+    trayMenu.addSeparator();
+    trayMenu.addAction(QObject::tr("Quit"), qApp, &QApplication::closeAllWindows);
+
+    QSystemTrayIcon trayIcon;
+    trayIcon.setIcon(QIcon(QStringLiteral(":/appicon.ico")));
+    trayIcon.setToolTip(QStringLiteral("Video Wallpaper"));
+    trayIcon.setContextMenu(&trayMenu);
+    trayIcon.show();
+    QObject::connect(&trayIcon, &QSystemTrayIcon::activated,
+        [=](QSystemTrayIcon::ActivationReason reason)
+        {
+            if (reason != QSystemTrayIcon::Context)
+                changeAction->triggered();
+        });
 }
 
 void DesktopVideoPlayer::moveToCenter(QWidget *window)
@@ -281,25 +323,29 @@ void DesktopVideoPlayer::moveToCenter(QWidget *window)
 }
 
 
-void DesktopVideoPlayer::removeVideo()
+void DesktopVideoPlayer::removeVideo(int screenIndex)
 {
-    if (mPlayer->isPlaying())
-        mPlayer->stop();
-    mRenderer->widget()->hide();
+    auto &playerInst = mPlayers[screenIndex];
+
+    if (playerInst->isPlaying())
+        playerInst->stop();
+    playerInst->renderer()->widget()->hide();
     ShowWindow(HWORKERW, SW_HIDE);
 }
 
-void DesktopVideoPlayer::playVideo(const QString &url)
+void DesktopVideoPlayer::playVideo(int screenIndex, const QString &url)
 {
-    mPlayer->audio()->setVolume(SettingsManager::getInstance()->getVolume());
-    mPlayer->audio()->setMute(SettingsManager::getInstance()->getMute());
+    auto &playerInst = mPlayers[screenIndex];
+
+    playerInst->audio()->setVolume(SettingsManager::getInstance()->getVolume());
+    playerInst->audio()->setMute(SettingsManager::getInstance()->getMute());
 
     if (SettingsManager::getInstance()->getHwdec())
     {
         QStringList decoders = SettingsManager::getInstance()->getDecoders();
         if (!decoders.contains(QStringLiteral("FFmpeg")))
             decoders << QStringLiteral("FFmpeg");
-        mPlayer->setVideoDecoderPriority(decoders);
+        playerInst->setVideoDecoderPriority(decoders);
         if (decoders.contains(QStringLiteral("CUDA")))
         {
             QVariantHash cuda_opt;
@@ -307,7 +353,7 @@ void DesktopVideoPlayer::playVideo(const QString &url)
             cuda_opt[QStringLiteral("copyMode")] = QStringLiteral("ZeroCopy");
             QVariantHash opt;
             opt[QStringLiteral("CUDA")] = cuda_opt;
-            mPlayer->setOptionsForVideoCodec(opt);
+            playerInst->setOptionsForVideoCodec(opt);
         }
         if (decoders.contains(QStringLiteral("D3D11")))
         {
@@ -316,7 +362,7 @@ void DesktopVideoPlayer::playVideo(const QString &url)
             d3d11_opt[QStringLiteral("copyMode")] = QStringLiteral("ZeroCopy");
             QVariantHash opt;
             opt[QStringLiteral("D3D11")] = d3d11_opt;
-            mPlayer->setOptionsForVideoCodec(opt);
+            playerInst->setOptionsForVideoCodec(opt);
         }
         if (decoders.contains(QStringLiteral("DXVA")))
         {
@@ -325,22 +371,22 @@ void DesktopVideoPlayer::playVideo(const QString &url)
             dxva_opt[QStringLiteral("copyMode")] = QStringLiteral("ZeroCopy");
             QVariantHash opt;
             opt[QStringLiteral("DXVA")] = dxva_opt;
-            mPlayer->setOptionsForVideoCodec(opt);
+            playerInst->setOptionsForVideoCodec(opt);
         }
     }
     else
-        mPlayer->setVideoDecoderPriority(QStringList() << QStringLiteral("FFmpeg"));
+        playerInst->setVideoDecoderPriority(QStringList() << QStringLiteral("FFmpeg"));
 
 
-    auto mainWindow = mRenderer->widget();
+    auto mainWindow = playerInst->renderer()->widget();
     if (mainWindow->isHidden())
         mainWindow->show();
 
-    if (mPlayer->isPaused())
-        mPlayer->pause(false);
+    if (playerInst->isPaused())
+        playerInst->pause(false);
     else if (!url.isEmpty())
     {
-        mPlayer->play(url);
+        playerInst->play(url);
         mainWindow->setWindowTitle(QFileInfo(url).fileName());
     }
 
@@ -349,53 +395,81 @@ void DesktopVideoPlayer::playVideo(const QString &url)
     ShowWindow(HWORKERW, legacyMode ? SW_HIDE : SW_SHOW);
 }
 
-void DesktopVideoPlayer::setVideoVolume(double volume)
+double DesktopVideoPlayer::videoVolume(int screenIndex)
+{
+    auto &playerInst = mPlayers[screenIndex];
+    if (playerInst->audio())
+    {
+        return playerInst->audio()->volume();
+    }
+    return 0.0;
+}
+
+void DesktopVideoPlayer::setVideoVolume(int screenIndex, double volume)
 {
     SettingsManager::getInstance()->setVolume(volume);
 
-    if (mPlayer->audio())
+    auto &playerInst = mPlayers[screenIndex];
+    if (playerInst->audio())
     {
-        mPlayer->audio()->setVolume(volume);
+        playerInst->audio()->setVolume(volume);
     }
 }
 
 void DesktopVideoPlayer::setMusicVolume(double volume)
 {
-    setVideoVolume(volume);
+    //setVideoVolume(volume);
 }
 
-void DesktopVideoPlayer::setMute(bool mute)
+bool DesktopVideoPlayer::getMute(int screenIndex) const
+{
+    auto &playerInst = mPlayers[screenIndex];
+    if (playerInst->audio())
+    {
+        return playerInst->audio()->isMute();
+    }
+    return true;
+}
+
+void DesktopVideoPlayer::setMute(int screenIndex, bool mute)
 {
     SettingsManager::getInstance()->setMute(mute);
 
-    if (mPlayer->audio())
+    auto &playerInst = mPlayers[screenIndex];
+    if (playerInst->audio())
     {
-        mPlayer->audio()->setMute(mute);
+        playerInst->audio()->setMute(mute);
         // Restore the volume
         if (!mute)
-            mPlayer->audio()->setVolume(SettingsManager::getInstance()->getVolume());
+            playerInst->audio()->setVolume(SettingsManager::getInstance()->getVolume());
     }
 }
 
 void DesktopVideoPlayer::playMusic(const QString &url)
 {
-    if (mPlayer->isLoaded() && mPlayer->audio())
-        mPlayer->setExternalAudio(url);
+    //if (mPlayer->isLoaded() && mPlayer->audio())
+    //    mPlayer->setExternalAudio(url);
 }
 
 void DesktopVideoPlayer::removeMusic()
 {
-    mPlayer->setExternalAudio("");
+    //mPlayer->setExternalAudio("");
 }
 
-void DesktopVideoPlayer::setVideoFillMode(VideoFillMode mode)
+void DesktopVideoPlayer::setVideoFillMode(int screenIndex, VideoFillMode mode)
 {
+    auto &playerInst = mPlayers[screenIndex];
     if (mode == VideoFillMode::Stretch)
-        mRenderer->setOutAspectRatioMode(QtAV::VideoRenderer::RendererAspectRatio);
+        playerInst->renderer()->setOutAspectRatioMode(QtAV::VideoRenderer::RendererAspectRatio);
     else if (mode == VideoFillMode::Contain)
-        mRenderer->setOutAspectRatioMode(QtAV::VideoRenderer::VideoAspectRatio);
+        playerInst->renderer()->setOutAspectRatioMode(QtAV::VideoRenderer::VideoAspectRatio);
     else
     {
-        mRenderer->setOutAspectRatio(3.0);
+        playerInst->renderer()->setOutAspectRatio(3.0);
     }
+}
+
+void DesktopVideoPlayer::setScreenMode(ScreenMode mode)
+{
+
 }

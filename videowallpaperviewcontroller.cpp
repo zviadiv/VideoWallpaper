@@ -11,22 +11,41 @@ VideoWallpaperViewController::VideoWallpaperViewController(QObject *parent)
     Application::instance()->engine()->rootContext()->setContextProperty("viewController", this);
 
     mDesktopPlayer = new DesktopVideoPlayer(this);
-    setMute(true);
 }
 
-double VideoWallpaperViewController::videoVolume() const
+double VideoWallpaperViewController::videoVolume(int screenIndex) const
 {
-    return mVideoVolume;
+    return mDesktopPlayer->videoVolume(screenIndex);
 }
 
-void VideoWallpaperViewController::setVideoVolume(double volume)
+void VideoWallpaperViewController::setVideoVolume(int screenIndex, double volume)
 {
-    if (volume != mVideoVolume)
-    {
-        mVideoVolume = volume;
-        mDesktopPlayer->setVideoVolume(volume);
-        emit videoVolumeChanged();
-    }
+    mDesktopPlayer->setVideoVolume(screenIndex, volume);
+}
+
+bool VideoWallpaperViewController::muteVideo(int screenIndex) const
+{
+    return mDesktopPlayer->getMute(screenIndex);
+}
+
+void VideoWallpaperViewController::setMuteVideo(int screenIndex, bool mute)
+{
+    mDesktopPlayer->setMute(screenIndex, mute);
+}
+
+int VideoWallpaperViewController::videoFillMode(int screenIndex) const
+{
+    return 0; // mVideoFillMode;
+}
+
+void VideoWallpaperViewController::setVideoFillMode(int screenIndex, int mode)
+{
+    mDesktopPlayer->setVideoFillMode(screenIndex, static_cast<VideoFillMode>(mode));
+}
+
+void VideoWallpaperViewController::setScreenMode(int mode)
+{
+    mDesktopPlayer->setScreenMode(static_cast<ScreenMode>(mode));
 }
 
 double VideoWallpaperViewController::musicVolume() const
@@ -44,45 +63,15 @@ void VideoWallpaperViewController::setMusicVolume(double volume)
     }
 }
 
-bool VideoWallpaperViewController::mute() const
+void VideoWallpaperViewController::playVideo(int screenIndex, const QString &url)
 {
-    return mMute;
+    qDebug() << "Attempting to start video playback: " << url;
+    mDesktopPlayer->playVideo(screenIndex, url);
 }
 
-void VideoWallpaperViewController::setMute(bool mute)
+void VideoWallpaperViewController::removeVideo(int screenIndex)
 {
-    if (mute != mMute)
-    {
-        mMute = mute;
-        mDesktopPlayer->setMute(mute);
-        emit muteChanged();
-    }
-}
-
-int VideoWallpaperViewController::videoFillMode() const
-{
-    return mVideoFillMode;
-}
-
-void VideoWallpaperViewController::setVideoFillMode(int mode)
-{
-    if (mode != mVideoFillMode)
-    {
-        mVideoFillMode = mode;
-        mDesktopPlayer->setVideoFillMode(static_cast<VideoFillMode>(mode));
-        emit videoFillModeChanged();
-    }
-}
-
-void VideoWallpaperViewController::playVideo()
-{
-    qDebug() << "Attempting to start video playback: " << mVideoUrl;
-    mDesktopPlayer->playVideo(mVideoUrl);
-}
-
-void VideoWallpaperViewController::removeVideo()
-{
-    mDesktopPlayer->removeVideo();
+    mDesktopPlayer->removeVideo(screenIndex);
 }
 
 void VideoWallpaperViewController::playMusic()
@@ -96,12 +85,12 @@ void VideoWallpaperViewController::playMusic()
 void VideoWallpaperViewController::removeMusic()
 {
     // Restore video volume settings
-    mDesktopPlayer->setVideoVolume(mVideoVolume);
+    //mDesktopPlayer->setVideoVolume(mVideoVolume);
     mDesktopPlayer->removeMusic();
 }
 
 void VideoWallpaperViewController::removeWallpaper()
 {
-    removeVideo();
+    //removeVideo();
     removeMusic();
 }

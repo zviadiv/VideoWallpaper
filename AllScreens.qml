@@ -6,6 +6,8 @@ Column {
     id: root
     spacing: 8
 
+    signal wallpaperModeChanged(var screenMode)
+
     Label {
         id: countLabel
         text: screenInfo.count + " MONITOR(S) DETECTED"
@@ -44,6 +46,8 @@ Column {
 
         ButtonGroup {
             id: radioGroup
+            buttons: multiScreenModes.children
+            onClicked: wallpaperModeChanged(radioGroup.checkedButton.tag)
         }
 
         Column {
@@ -52,20 +56,20 @@ Column {
             CustomButton {
                 checked: true
                 text: qsTr("Set Different Wallpaper for each Monitor")
-                ButtonGroup.group: radioGroup
                 iconSource: "/resources/icons/screens-1.svg"
+                tag: Constants.ScreenMode.Unique
             }
 
             CustomButton {
                 text: qsTr("Set Single Wallpaper Across All Monitors")
-                ButtonGroup.group: radioGroup
                 iconSource: "/resources/icons/screens-2.svg"
+                tag: Constants.ScreenMode.Shared
             }
 
             CustomButton {
                 text: qsTr("Duplicate Single Wallpaper")
-                ButtonGroup.group: radioGroup
                 iconSource: "/resources/icons/screens-3.svg"
+                tag: Constants.ScreenMode.Copy
             }
 
             /*Rectangle {

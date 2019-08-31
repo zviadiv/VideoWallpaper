@@ -6,6 +6,8 @@ Button {
 
     property alias iconSource: control.icon.source
 
+    property var tag
+
     contentItem: Row {
         spacing: 5
 

@@ -8,4 +8,9 @@ QtObject {
     {
         Cover = 0, Contain, Stretch
     }
+
+    enum ScreenMode
+    {
+        Unique = 0, Shared, Copy
+    }
 }

@@ -17,6 +17,9 @@ public:
 
     QQmlApplicationEngine* engine() { return mQmlEngine; }
 
+    bool mainWindowVisible() const;
+    void showMainWindow(bool show, bool center = true);
+
 private:
     void checkCompatibility();
 

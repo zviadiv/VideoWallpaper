@@ -16,26 +16,14 @@ ApplicationWindow {
         //root.close()
     }
 
-    FileDialog {
-        id: browseVideoDialog
-        title: "Please choose your video"
-        folder: shortcuts.home
-        nameFilters: [ "Video files (*.mp4 *.avi)", "All files (*)" ]
-        onAccepted: {
-            console.log("Video path: " + browseVideoDialog.fileUrls)
-            viewController.videoUrl = browseVideoDialog.fileUrls[0]
-        }
-    }
+    AllScreens {
+        id: rectangle
+        anchors.right: parent.horizontalCenter
+        y: 10
+        width: 215
+        height: 122
 
-    FileDialog {
-        id: browseAudioDialog
-        title: "Please choose your audio"
-        folder: shortcuts.home
-        nameFilters: [ "Audio files (*.mp3 *.wav)", "All files (*)" ]
-        onAccepted: {
-            console.log("Audio path: " + browseAudioDialog.fileUrls)
-            viewController.musicUrl = browseAudioDialog.fileUrls[0]
-        }
+        onWallpaperModeChanged: viewController.setScreenMode(screenMode)
     }
 
     TabBar {
@@ -45,6 +33,7 @@ ApplicationWindow {
         width: 710
         height: 216
         position: TabBar.Header
+        currentIndex: 0
 
         Repeater {
             model: Qt.application.screens
@@ -69,6 +58,30 @@ ApplicationWindow {
             Item {
                 id: tab
 
+                property string videoUrl
+
+                FileDialog {
+                    id: browseVideoDialog
+                    title: "Please choose your video"
+                    folder: shortcuts.home
+                    nameFilters: [ "Video files (*.mp4 *.avi)", "All files (*)" ]
+                    onAccepted: {
+                        console.log("Video path: " + browseVideoDialog.fileUrls)
+                        videoUrl = browseVideoDialog.fileUrls[0]
+                    }
+                }
+
+                FileDialog {
+                    id: browseAudioDialog
+                    title: "Please choose your audio"
+                    folder: shortcuts.home
+                    nameFilters: [ "Audio files (*.mp3 *.wav)", "All files (*)" ]
+                    onAccepted: {
+                        console.log("Audio path: " + browseAudioDialog.fileUrls)
+                        viewController.musicUrl = browseAudioDialog.fileUrls[0]
+                    }
+                }
+
                 Label {
                     id: label
                     x: 56
@@ -80,6 +93,7 @@ ApplicationWindow {
                 }
 
                 Row {
+                    id: row
                     x: 56
                     y: 266
                     width: 593
@@ -92,10 +106,10 @@ ApplicationWindow {
                         width: 242
                         height: 20
                         text: {
-                         if (viewController.videoUrl.length == 0)
+                         if (videoUrl.length == 0)
                              return qsTr("Choose your video")
                          else
-                             return viewController.videoUrl
+                             return videoUrl
                         }
                         font.weight: Font.Thin
                         leftPadding: 5
@@ -125,10 +139,10 @@ ApplicationWindow {
                         text: qsTr("APPLY")
                         spacing: 0
                         highlighted: false
-                        enabled: viewController.videoUrl.length != 0
+                        enabled: videoUrl.length != 0
 
                         onClicked: {
-                            viewController.playVideo()
+                            viewController.playVideo(tabBar.currentIndex, videoUrl);
                         }
                     }
 
@@ -139,10 +153,11 @@ ApplicationWindow {
                         width: 100
                         height: 24
                         text: qsTr("REMOVE")
-                        enabled: viewController.videoUrl.length != 0
+                        anchors.right: root.right
+                        enabled: videoUrl.length != 0
 
                         onClicked: {
-                            viewController.removeVideo()
+                            viewController.removeVideo(tabBar.currentIndex)
                         }
                     }
                 }
@@ -182,13 +197,13 @@ ApplicationWindow {
                         switch (comboBoxVideoSize.currentIndex)
                         {
                         case 0:
-                            viewController.videoFillMode = Constants.VideoFillMode.Cover
+                            viewController.setVideoFillMode(tabBar.currentIndex, Constants.VideoFillMode.Cover)
                             break;
                         case 1:
-                            viewController.videoFillMode = Constants.VideoFillMode.Contain
+                            viewController.setVideoFillMode(tabBar.currentIndex, Constants.VideoFillMode.Contain)
                             break;
                         case 2:
-                            viewController.videoFillMode = Constants.VideoFillMode.Stretch
+                            viewController.setVideoFillMode(tabBar.currentIndex, Constants.VideoFillMode.Stretch)
                             break;
                         }
                     }
@@ -196,34 +211,22 @@ ApplicationWindow {
 
                 CustomSlider {
                     id: sliderVideoPosition
-                    slider.x: 140
-                    slider.y: 347
-                    slider.width: 144
-                    slider.height: 21
-                    slider.value: 0
+                    slider { x: 140; y: 347; width: 144; height: 21; value: 0 }
                 }
 
                 CustomSlider {
                     id: sliderVideoOverlay
-                    slider.x: 444
-                    slider.y: 309
-                    slider.width: 144
-                    slider.height: 21
-                    slider.value: 0
+                    slider { x: 444; y: 309; width: 144; height: 21; value: 0 }
                     enabled: checkBoxVideoOverlay.checked
                 }
 
                 CustomSlider {
                     id: sliderVideoVolume
-                    slider.x: 444
-                    slider.y: 348
-                    slider.width: 144
-                    slider.height: 21
-                    slider.value: 0.5
+                    slider { x: 444; y: 348; width: 144; height: 21; value: 0.5 }
                     enabled: checkBoxVideoVolume.checked
 
                     onValueChanged: {
-                        viewController.videoVolume = slider.value
+                        viewController.setVideoVolume(tabBar.currentIndex, slider.value)
                     }
                 }
 
@@ -235,7 +238,7 @@ ApplicationWindow {
                     checked: false
 
                     onCheckedChanged: {
-                        viewController.mute = !checkBoxVideoVolume.checked
+                        viewController.setMuteVideo(tabBar.currentIndex, !checkBoxVideoVolume.checked)
                     }
                 }
 
@@ -245,14 +248,6 @@ ApplicationWindow {
                     y: 300
                     text: qsTr("VIDEO OVERLAY")
                     checked: false
-                }
-
-                AllScreens {
-                    id: rectangle
-                    anchors.right: parent.horizontalCenter
-                    y: 10
-                    width: 215
-                    height: 122
                 }
             }
         }
@@ -340,11 +335,7 @@ ApplicationWindow {
         id: sliderMusicVolume
         x: -15
         y: -24
-        slider.x: 273
-        slider.y: 483
-        slider.width: 144
-        slider.height: 21
-        slider.value: 0.5
+        slider { x: 273; y: 483; width: 144; height: 21; value: 0.5 }
 
         onValueChanged: {
             viewController.musicVolume = slider.value
@@ -365,15 +356,15 @@ ApplicationWindow {
 
         Button {
             id: buttonRemoveWallpaper
-            y: 28
+            y: 14
             width: 139
             height: 26
             text: qsTr("REMOVE WALLPAPER")
             anchors.left: parent.left
-            anchors.leftMargin: 30
+            anchors.leftMargin: 18
 
             onClicked: {
-                viewController.videoUrl = ""
+                videoUrl = ""
                 viewController.musicUrl = ""
                 viewController.removeWallpaper()
             }
@@ -381,13 +372,21 @@ ApplicationWindow {
 
         Button {
             id: buttonSaveWallpaperAndExit
-            x: 455
-            y: 28
-            width: 226
+            x: 473
+            y: 17
+            width: 216
             height: 26
             text: qsTr("SAVE WALLPAPER && CLOSE WINDOW")
             anchors.right: parent.right
-            anchors.rightMargin: 30
+            anchors.rightMargin: 21
+        }
+
+        Label {
+            id: label5
+            x: 218
+            y: 53
+            color: "#ffffff"
+            text: qsTr("Copyright © mylivewallpapers.com. All Rights Reserved.")
         }
     }
 }
@@ -406,8 +405,22 @@ ApplicationWindow {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /*##^## Designer {
-    D{i:29;anchors_height:81;anchors_width:1200;anchors_x:0;anchors_y:865}D{i:31;anchors_x:26}
-D{i:30;anchors_height:66;anchors_width:710;anchors_x:0;anchors_y:494}
+    D{i:29;anchors_height:81;anchors_width:1200;anchors_x:0;anchors_y:865}D{i:30;anchors_height:66;anchors_width:710;anchors_x:0;anchors_y:494}
+D{i:31;anchors_x:26}
 }
  ##^##*/
