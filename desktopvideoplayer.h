@@ -46,6 +46,8 @@ public:
     void setScreenMode(ScreenMode mode);
 
 private:
+    void setDefaultRenderers();
+    void setDefaultRenderer(int screenIndex);
     void createSystemTrayMenu();
     void moveToCenter(QWidget *window);
 
@@ -53,7 +55,7 @@ private:
     using RendererPtr = QSharedPointer<QtAV::VideoRenderer>;
 
     void createPlayers();
-    RendererPtr createVideoRenderer();
+    RendererPtr createVideoRenderer(const QRect& geometry);
     void pauseAllPlayers(bool pause);
     void muteAllPlayers(bool mute);
 

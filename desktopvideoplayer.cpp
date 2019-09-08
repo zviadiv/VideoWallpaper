@@ -9,6 +9,7 @@
 #include <QSystemTrayIcon>
 #include <QDir>
 #include <QMenu>
+#include <QScreen>
 #include <QtAV>
 
 static HWND HWORKERW = nullptr;
@@ -170,7 +171,8 @@ void DesktopVideoPlayer::createPlayers()
 
     for (int i = 0; i < QApplication::screens().size(); i++)
     {
-        auto renderer = createVideoRenderer();
+        auto screen = QApplication::screens().at(i);
+        auto renderer = createVideoRenderer(screen->geometry());
         mRenderers.push_back(renderer);
 
         PlayerPtr player(new QtAV::AVPlayer());
@@ -197,7 +199,7 @@ void DesktopVideoPlayer::createPlayers()
     }
 }
 
-DesktopVideoPlayer::RendererPtr DesktopVideoPlayer::createVideoRenderer()
+DesktopVideoPlayer::RendererPtr DesktopVideoPlayer::createVideoRenderer(const QRect& geometry)
 {
     auto renderer = QtAV::VideoRenderer::create(SettingsManager::getInstance()->getRenderer());
     if (!renderer || !renderer->isAvailable() || !renderer->widget())
@@ -331,6 +333,8 @@ void DesktopVideoPlayer::removeVideo(int screenIndex)
         playerInst->stop();
     playerInst->renderer()->widget()->hide();
     ShowWindow(HWORKERW, SW_HIDE);
+
+    //setDefaultRenderer(screenIndex);
 }
 
 void DesktopVideoPlayer::playVideo(int screenIndex, const QString &url)
@@ -469,7 +473,80 @@ void DesktopVideoPlayer::setVideoFillMode(int screenIndex, VideoFillMode mode)
     }
 }
 
+void DesktopVideoPlayer::setDefaultRenderers()
+{
+    for (int i = 0; i < QApplication::screens().size(); i++)
+    {
+        setDefaultRenderer(i);
+    }
+}
+
+void DesktopVideoPlayer::setDefaultRenderer(int screenIndex)
+{
+    mPlayers[screenIndex]->clearVideoRenderers();
+    mPlayers[screenIndex]->setRenderer(mRenderers[screenIndex].get());
+}
+
 void DesktopVideoPlayer::setScreenMode(ScreenMode mode)
 {
+    // This is to recover from ScreenMode::Copy mode where we display
+    // the output of first player on all available screens
+    setDefaultRenderers();
 
+    if (mode == ScreenMode::Unique)
+    {
+        // In Unique mode each screen will get a unique video displayed
+        for (int i = 0; i < QApplication::screens().size(); i++)
+        {
+            auto widget = mPlayers[i]->renderer()->widget();
+            bool loaded = mPlayers[i]->isLoaded();
+            widget->setVisible(loaded);
+            widget->setGeometry(QApplication::screens().at(i)->geometry());
+
+            // Make sure the player is not paused
+            if (loaded)
+            {
+                if (mPlayers[i]->isPaused())
+                    mPlayers[i]->pause(false);
+            }
+        }
+    }
+    else if (mode == ScreenMode::Shared)
+    {
+        // In Shared mode we hide all player widgets except for the first one.
+        // Its size will be enlarged to cover the entire virtual desktop space
+        for (int i = 1; i < QApplication::screens().size(); i++)
+        {
+            // Make sure player is paused
+            if (mPlayers[i]->isLoaded() && mPlayers[i]->isPlaying())
+                mPlayers[i]->pause(true);
+            mPlayers[i]->renderer()->widget()->hide();
+        }
+
+        mPlayers[0]->renderer()->widget()->setVisible(mPlayers[0]->isPlaying());
+
+        auto geom = QApplication::screens().at(0)->virtualGeometry();
+        qDebug() << "Updating player 0 widget geometry to " << geom;
+        mPlayers[0]->renderer()->widget()->setGeometry(geom);
+    }
+    else if (mode == ScreenMode::Copy)
+    {
+        // Set correct geometries to player widgets
+        for (int i = 0; i < QApplication::screens().size(); i++)
+        {
+            auto widget = mPlayers[i]->renderer()->widget();
+            widget->setVisible(i == 0 ? mPlayers[i]->isPlaying() : true);
+            widget->setGeometry(QApplication::screens().at(i)->geometry());
+        }
+
+        // Add other screens' renderers as the output for main screen's player
+        for (int i = 1; i < mRenderers.size(); i++)
+        {
+            mPlayers[i]->clearVideoRenderers();
+            mPlayers[0]->addVideoRenderer(mRenderers[i].get());
+            // Make sure player is paused
+            if (mPlayers[i]->isLoaded() && mPlayers[i]->isPlaying())
+                mPlayers[i]->pause(true);
+        }
+    }
 }
