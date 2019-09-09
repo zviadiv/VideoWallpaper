@@ -7,8 +7,12 @@ import QtQuick.Dialogs 1.0
 ApplicationWindow {
     id:root
     visible: true
-    width: 710
-    height: 560
+    width: 800
+    height: 630
+    maximumWidth: 800
+    minimumWidth: maximumWidth
+    maximumHeight: 630
+    minimumHeight: maximumHeight
     title: qsTr("Video Wallpaper ") + Qt.application.version + qsTr(" (pre-alpha)")
     //flags: Qt.WindowStaysOnTopHint
 
@@ -60,19 +64,30 @@ ApplicationWindow {
         }
     }
 
-    AllScreens {
-        id: screens
-        anchors.right: parent.horizontalCenter
+    Row {
+        spacing: 10
         y: 10
-        width: 215
-        height: 122
-        currentIndex: 0
+        height: 200
+        anchors.horizontalCenter: parent.horizontalCenter
 
-        onWallpaperModeChanged: {
-            viewController.setScreenMode(screenMode)
-            var mergedTab = (screenMode === Constants.ScreenMode.Shared ||
-                screenMode === Constants.ScreenMode.Copy)
-            rebuildTabBar(mergedTab)
+        AllScreens {
+            id: screens
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            currentIndex: 0
+        }
+        ScreenModeSwitch {
+            id: screenMode
+            width: 200
+            anchors.top : parent.top
+            anchors.bottom: parent.bottom
+
+            onWallpaperModeChanged: {
+                viewController.setScreenMode(screenMode)
+                var mergedTab = (screenMode === Constants.ScreenMode.Shared ||
+                                 screenMode === Constants.ScreenMode.Copy)
+                rebuildTabBar(mergedTab)
+            }
         }
     }
 
@@ -400,10 +415,10 @@ ApplicationWindow {
             id: buttonRemoveWallpaper
             y: 14
             width: 139
-            height: 26
+            height: 33
             text: qsTr("REMOVE WALLPAPER")
             anchors.left: parent.left
-            anchors.leftMargin: 18
+            anchors.leftMargin: 20
 
             onClicked: {
                 videoUrl = ""
@@ -414,26 +429,29 @@ ApplicationWindow {
 
         ColoredButton {
             id: buttonSaveWallpaperAndExit
-            x: 473
-            y: 17
+            x: 560
+            y: 14
             width: 216
-            height: 26
+            height: 34
             text: qsTr("SAVE WALLPAPER && CLOSE WINDOW")
+            enabled: true
             anchors.right: parent.right
-            anchors.rightMargin: 21
+            anchors.rightMargin: 24
             backgroundColor: "#ff8563"
             textColor: "white"
         }
 
         Label {
             id: label5
-            x: 218
-            y: 53
+            x: 224
+            y: 24
             color: "#ffffff"
             text: qsTr("Copyright © mylivewallpapers.com. All Rights Reserved.")
         }
     }
 }
+
+
 
 
 

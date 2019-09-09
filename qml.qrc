@@ -26,5 +26,6 @@
         <file>appicon.ico</file>
         <file>CustomTabButton.qml</file>
         <file>ColoredButton.qml</file>
+        <file>ScreenModeSwitch.qml</file>
     </qresource>
 </RCC>
