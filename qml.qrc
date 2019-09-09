@@ -24,5 +24,7 @@
         <file>resources/icons/icon-video-position.png</file>
         <file>resources/icons/icon-video-volume.png</file>
         <file>appicon.ico</file>
+        <file>CustomTabButton.qml</file>
+        <file>ColoredButton.qml</file>
     </qresource>
 </RCC>

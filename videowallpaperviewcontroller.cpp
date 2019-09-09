@@ -13,19 +13,10 @@ VideoWallpaperViewController::VideoWallpaperViewController(QObject *parent)
     mDesktopPlayer = new DesktopVideoPlayer(this);
 }
 
-double VideoWallpaperViewController::videoVolume(int screenIndex) const
-{
-    return mDesktopPlayer->videoVolume(screenIndex);
-}
-
 void VideoWallpaperViewController::setVideoVolume(int screenIndex, double volume)
 {
-    mDesktopPlayer->setVideoVolume(screenIndex, volume);
-}
-
-bool VideoWallpaperViewController::muteVideo(int screenIndex) const
-{
-    return mDesktopPlayer->getMute(screenIndex);
+    if (screenIndex >= 0)
+        mDesktopPlayer->setVideoVolume(screenIndex, volume);
 }
 
 void VideoWallpaperViewController::setMuteVideo(int screenIndex, bool mute)
@@ -33,14 +24,10 @@ void VideoWallpaperViewController::setMuteVideo(int screenIndex, bool mute)
     mDesktopPlayer->setMute(screenIndex, mute);
 }
 
-int VideoWallpaperViewController::videoFillMode(int screenIndex) const
-{
-    return 0; // mVideoFillMode;
-}
-
 void VideoWallpaperViewController::setVideoFillMode(int screenIndex, int mode)
 {
-    mDesktopPlayer->setVideoFillMode(screenIndex, static_cast<VideoFillMode>(mode));
+    if (screenIndex >= 0)
+        mDesktopPlayer->setVideoFillMode(screenIndex, static_cast<VideoFillMode>(mode));
 }
 
 void VideoWallpaperViewController::setScreenMode(int mode)
@@ -65,13 +52,17 @@ void VideoWallpaperViewController::setMusicVolume(double volume)
 
 void VideoWallpaperViewController::playVideo(int screenIndex, const QString &url)
 {
-    qDebug() << "Attempting to start video playback: " << url;
-    mDesktopPlayer->playVideo(screenIndex, url);
+    if (screenIndex >= 0)
+    {
+        qDebug() << "Attempting to start video playback: " << url;
+        mDesktopPlayer->playVideo(screenIndex, url);
+    }
 }
 
 void VideoWallpaperViewController::removeVideo(int screenIndex)
 {
-    mDesktopPlayer->removeVideo(screenIndex);
+    if (screenIndex >= 0)
+        mDesktopPlayer->removeVideo(screenIndex);
 }
 
 void VideoWallpaperViewController::playMusic()

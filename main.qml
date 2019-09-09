@@ -10,20 +10,48 @@ ApplicationWindow {
     width: 710
     height: 560
     title: qsTr("Video Wallpaper ") + Qt.application.version + qsTr(" (pre-alpha)")
+    //flags: Qt.WindowStaysOnTopHint
 
     onClosing: {
         console.log("Closing app window");
         //root.close()
     }
 
+    Component {
+        id: tabButton
+        CustomTabButton { }
+    }
+
+    function rebuildTabBar()
+    {
+        for (var i = 0; i < Qt.application.screens.length; i++)
+        {
+            var tab = tabButton.createObject(tabBar, {
+                    width: 100,
+                    height: 30,
+                    text: qsTr("MONITOR ") + (i + 1)})
+            //tab.font.bold = true
+            tabBar.addItem(tab)
+        }
+    }
+
     AllScreens {
-        id: rectangle
+        id: screens
         anchors.right: parent.horizontalCenter
         y: 10
         width: 215
         height: 122
+        currentIndex: 0
 
-        onWallpaperModeChanged: viewController.setScreenMode(screenMode)
+        onWallpaperModeChanged: {
+            viewController.setScreenMode(screenMode)
+            if (screenMode == Constants.ScreenMode.Shared ||
+                screenMode == Constants.ScreenMode.Copy)
+            {
+                for (var i = 1; i < Qt.application.screens.length; i++)
+                    tabBar.removeItem(tabBar.itemAt(i))
+            }
+        }
     }
 
     TabBar {
@@ -33,30 +61,26 @@ ApplicationWindow {
         width: 710
         height: 216
         position: TabBar.Header
-        currentIndex: 0
 
-        Repeater {
-            model: Qt.application.screens
-
-            TabButton {
-                width: 100
-                text: qsTr("Monitor " + (index+1))
-                font.bold: true
-            }
+        onCurrentIndexChanged: screens.currentIndex = tabBar.currentIndex
+        Component.onCompleted: {
+            rebuildTabBar()
+            currentIndex = 0
         }
     }
 
     StackLayout {
+        y: 7
         anchors.rightMargin: 0
         anchors.bottomMargin: 168
-        anchors.fill: parent
         currentIndex: tabBar.currentIndex
 
         Repeater {
             model: Qt.application.screens
 
-            Item {
+            Rectangle {
                 id: tab
+                color: "red"
 
                 property string videoUrl
 
@@ -99,22 +123,18 @@ ApplicationWindow {
                     width: 593
                     height: 28
                     spacing: 5
-                    TextInput {
+                    TextField {
                         id: textInputVideoPath
                         x: 56
                         y: 0
                         width: 242
-                        height: 20
-                        text: {
-                         if (videoUrl.length == 0)
-                             return qsTr("Choose your video")
-                         else
-                             return videoUrl
-                        }
+                        height: 24
+                        placeholderText: qsTr("Choose your video")
+                        text: videoUrl
                         font.weight: Font.Thin
+                        font.pixelSize: 12
                         leftPadding: 5
                         padding: 0
-                        font.pixelSize: 12
                     }
 
                     Button {
@@ -130,15 +150,17 @@ ApplicationWindow {
                         }
                     }
 
-                    Button {
+                    ColoredButton {
                         id: buttonApplyVideo
                         x: 405
                         y: 0
-                        width: 100
+                        width: 80
                         height: 24
                         text: qsTr("APPLY")
                         spacing: 0
                         highlighted: false
+                        backgroundColor: "#ff8563"
+                        textColor: "white"
                         enabled: videoUrl.length != 0
 
                         onClicked: {
@@ -146,11 +168,11 @@ ApplicationWindow {
                         }
                     }
 
-                    Button {
+                    ColoredButton {
                         id: buttonRemoveVideo
                         x: 511
                         y: 0
-                        width: 100
+                        width: 80
                         height: 24
                         text: qsTr("REMOVE")
                         anchors.right: root.right
@@ -261,18 +283,14 @@ ApplicationWindow {
         font.bold: true
     }
 
-    TextInput {
+    TextField {
         id: textInputMusicPath
         x: 41
-        y: 423
+        y: 421
         width: 242
-        height: 20
-        text: {
-         if (viewController.musicUrl.length == 0)
-             return qsTr("Choose your music")
-         else
-             return viewController.musicUrl
-        }
+        height: 24
+        placeholderText: qsTr("Choose your music")
+        text: viewController.musicUrl
         leftPadding: 5
         padding: 0
         font.pixelSize: 12
@@ -292,14 +310,16 @@ ApplicationWindow {
         }
     }
 
-    Button {
+    ColoredButton {
         id: buttonApplyMusic
         x: 390
         y: 421
-        width: 100
+        width: 80
         height: 24
         text: qsTr("APPLY")
         highlighted: false
+        backgroundColor: "#ff8563"
+        textColor: "white"
         spacing: 0
         enabled: viewController.musicUrl.length != 0
 
@@ -308,11 +328,11 @@ ApplicationWindow {
         }
     }
 
-    Button {
+    ColoredButton {
         id: buttonRemoveMusic
         x: 496
         y: 421
-        width: 100
+        width: 80
         height: 24
         text: qsTr("REMOVE")
         enabled: viewController.musicUrl.length != 0
@@ -419,8 +439,10 @@ ApplicationWindow {
 
 
 
+
+
 /*##^## Designer {
-    D{i:29;anchors_height:81;anchors_width:1200;anchors_x:0;anchors_y:865}D{i:30;anchors_height:66;anchors_width:710;anchors_x:0;anchors_y:494}
-D{i:31;anchors_x:26}
+    D{i:5;anchors_height:384;anchors_width:688;anchors_x:8;anchors_y:39}D{i:29;anchors_height:81;anchors_width:1200;anchors_x:0;anchors_y:865}
+D{i:30;anchors_height:66;anchors_width:710;anchors_x:0;anchors_y:494}D{i:31;anchors_x:26}
 }
  ##^##*/

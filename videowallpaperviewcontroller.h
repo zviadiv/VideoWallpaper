@@ -28,13 +28,8 @@ public slots:
     void playVideo(int screenIndex, const QString &url);
     void removeVideo(int screenIndex);
 
-    double videoVolume(int screenIndex) const;
     void setVideoVolume(int screenIndex, double volume);
-
-    bool muteVideo(int screenIndex) const;
     void setMuteVideo(int screenIndex, bool mute);
-
-    int videoFillMode(int screenIndex) const;
     void setVideoFillMode(int screenIndex, int mode);
 
     void setScreenMode(int mode);

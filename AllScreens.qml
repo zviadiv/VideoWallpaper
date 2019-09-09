@@ -6,6 +6,8 @@ Column {
     id: root
     spacing: 8
 
+    property int currentIndex
+
     signal wallpaperModeChanged(var screenMode)
 
     Label {
@@ -29,17 +31,17 @@ Column {
                 Rectangle {
                     id: rect
                     anchors.fill: parent
-                    color: "#4F71FF"
+                    color: index == currentIndex ? "#4F71FF" : "white"
                     radius: 5
                     border.width: 2
-                    border.color: "blue"
+                    border.color: "#3554cd"
                 }
                 Label {
                     anchors.centerIn: rect
                     lineHeight: 1.5
                     text: "MONITOR " + (index + 1) + "\n" + modelData.width + " x " + modelData.height
                     font.bold: true
-                    color: "white"
+                    color: index == currentIndex ? "white" : "#3554cd"
                 }
             }
         }
@@ -52,6 +54,7 @@ Column {
 
         Column {
             id: multiScreenModes
+            visible: screenInfo.count != 0
 
             CustomButton {
                 checked: true

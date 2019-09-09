@@ -28,5 +28,6 @@ Item {
         text: qsTr("0")
         verticalAlignment: Text.AlignVCenter
         horizontalAlignment: Text.AlignHCenter
+        background: Rectangle { color: "white" }
     }
 }

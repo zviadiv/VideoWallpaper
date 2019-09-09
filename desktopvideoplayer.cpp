@@ -45,6 +45,7 @@ HWND getWorkerW(bool legacyMode = false)
 
 DesktopVideoPlayer::DesktopVideoPlayer(QObject *parent)
     : QObject(parent)
+    , mWindowMode(true)
 {
     int suffixIndex;
     mCurrentVersion = QVersionNumber::fromString(QSysInfo::kernelVersion(), &suffixIndex);
@@ -223,19 +224,18 @@ DesktopVideoPlayer::RendererPtr DesktopVideoPlayer::createVideoRenderer(const QR
         renderer->setQuality(QtAV::VideoRenderer::QualityFastest);
 
     QWidget *mainWindow = renderer->widget();
-    const Qt::WindowFlags rendererWindowFlags = Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint | Qt::WindowDoesNotAcceptFocus;
-    const QRect screenGeometry = QApplication::desktop()->screenGeometry(mainWindow);
-    if (!mWindowMode)
+    const Qt::WindowFlags rendererWindowFlags = Qt::FramelessWindowHint | /*Qt::WindowStaysOnTopHint |*/ Qt::WindowDoesNotAcceptFocus;
+    //if (!mWindowMode)
     {
         mainWindow->setWindowFlags(rendererWindowFlags);
         // Why is Direct2D image too large?
-        mainWindow->setGeometry(screenGeometry);
+        mainWindow->setGeometry(geometry);
     }
-    else
+    /*else
     {
         mainWindow->resize(QSize(1280, 720));
         moveToCenter(mainWindow);
-    }
+    }*/
     mainWindow->setWindowIcon(QIcon(QStringLiteral(":/appicon.ico")));
     mainWindow->setWindowTitle(QStringLiteral("Video Wallpaper"));
 
