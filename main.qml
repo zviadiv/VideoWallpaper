@@ -22,14 +22,39 @@ ApplicationWindow {
         CustomTabButton { }
     }
 
-    function rebuildTabBar()
+    function rebuildTabBar(merged)
     {
+        if (tabBar.count > 0)
+        {
+            tabBar.contentChildren = null
+        }
+
+        var mergedTabText = "MONITOR "
         for (var i = 0; i < Qt.application.screens.length; i++)
         {
-            var tab = tabButton.createObject(tabBar, {
-                    width: 100,
-                    height: 30,
-                    text: qsTr("MONITOR ") + (i + 1)})
+            if (merged)
+            {
+                if (i !== 0)
+                    mergedTabText += "& "
+                mergedTabText += (i + 1) + " "
+            }
+            else
+            {
+                var tab = tabButton.createObject(tabBar, {
+                                                     width: 150,
+                                                     height: 30,
+                                                     text: qsTr("MONITOR ") + (i + 1)})
+                //tab.font.bold = true
+                tabBar.addItem(tab)
+            }
+        }
+        if (merged)
+        {
+            tab = tabButton.createObject(tabBar, {
+                                             width: 150,
+                                             height: 30,
+                                             text: mergedTabText
+                                         })
             //tab.font.bold = true
             tabBar.addItem(tab)
         }
@@ -45,12 +70,9 @@ ApplicationWindow {
 
         onWallpaperModeChanged: {
             viewController.setScreenMode(screenMode)
-            if (screenMode == Constants.ScreenMode.Shared ||
-                screenMode == Constants.ScreenMode.Copy)
-            {
-                for (var i = 1; i < Qt.application.screens.length; i++)
-                    tabBar.removeItem(tabBar.itemAt(i))
-            }
+            var mergedTab = (screenMode === Constants.ScreenMode.Shared ||
+                screenMode === Constants.ScreenMode.Copy)
+            rebuildTabBar(mergedTab)
         }
     }
 
@@ -64,7 +86,7 @@ ApplicationWindow {
 
         onCurrentIndexChanged: screens.currentIndex = tabBar.currentIndex
         Component.onCompleted: {
-            rebuildTabBar()
+            rebuildTabBar(false)
             currentIndex = 0
         }
     }
@@ -374,7 +396,7 @@ ApplicationWindow {
         anchors.bottom: parent.bottom
         anchors.bottomMargin: 0
 
-        Button {
+        ColoredButton {
             id: buttonRemoveWallpaper
             y: 14
             width: 139
@@ -390,7 +412,7 @@ ApplicationWindow {
             }
         }
 
-        Button {
+        ColoredButton {
             id: buttonSaveWallpaperAndExit
             x: 473
             y: 17
@@ -399,6 +421,8 @@ ApplicationWindow {
             text: qsTr("SAVE WALLPAPER && CLOSE WINDOW")
             anchors.right: parent.right
             anchors.rightMargin: 21
+            backgroundColor: "#ff8563"
+            textColor: "white"
         }
 
         Label {

@@ -4,8 +4,8 @@ import QtQuick.Controls 2.2
 Button {
     id: control
 
-    property color  backgroundColor: "#d1d2ea"
-    property color  textColor: "black"
+    property color backgroundColor: "#d1d2ea"
+    property color textColor: "black"
 
     contentItem: Text {
         text: parent.text
@@ -20,7 +20,7 @@ Button {
     background: Rectangle {
         implicitWidth: 100
         implicitHeight: 40
-        color: backgroundColor
+        color: down ? Qt.darker(backgroundColor, 1.2) : backgroundColor
         opacity: enabled ? 1 : 0.4
         radius: 4
     }

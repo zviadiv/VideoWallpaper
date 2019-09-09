@@ -8,6 +8,11 @@ Column {
 
     property int currentIndex
 
+    QtObject {
+        id: internal
+        property int maxWidth: 0
+    }
+
     signal wallpaperModeChanged(var screenMode)
 
     Label {
@@ -18,15 +23,15 @@ Column {
     }
 
     Row {
-        spacing: 10
+        spacing: 4
 
         Repeater {
             id: screenInfo
             model: Qt.application.screens
 
             Item {
-                width: 200
-                height: 100
+                width: 200 * modelData.width / internal.maxWidth
+                height: width * (modelData.height / modelData.width)
 
                 Rectangle {
                     id: rect
@@ -87,9 +92,9 @@ Column {
 
     Component.onCompleted: {
         var screens = Qt.application.screens;
+        internal.maxWidth = 0;
         for (var i = 0; i < screens.length; ++i)
-            console.log("screen " + screens[i].name + " has geometry " +
-                        screens[i].virtualX + ", " + screens[i].virtualY + " " +
-                        screens[i].width + "x" + screens[i].height)
+            if (screens[i].width > internal.maxWidth)
+                internal.maxWidth = screens[i].width;
     }
 }
