@@ -151,7 +151,7 @@ ApplicationWindow {
 
                     TextField {
                         id: textInputVideoPath
-                        width: 242
+                        width: 360
                         height: 24
                         placeholderText: qsTr("Choose your video")
                         text: videoUrl
@@ -161,7 +161,7 @@ ApplicationWindow {
                         padding: 0
                     }
 
-                    Button {
+                    ColoredButton {
                         id: buttonBrowseVideo
                         width: 100
                         height: 24
@@ -170,6 +170,12 @@ ApplicationWindow {
                         onClicked: {
                             browseVideoDialog.open()
                         }
+                    }
+
+                    // Spacer
+                    Item {
+                        width: 25
+                        height: parent.height
                     }
 
                     ColoredButton {
@@ -226,27 +232,27 @@ ApplicationWindow {
                     y: 308
                     width: 127
                     height: 28
-                    model: [ "Cover", "Contain", "Stretch" ]
+                        model: [ "Cover", "Contain", "Stretch" ]
 
-                    enum VideoFillMode
-                    {
-                        Cover = 0, Contain, Stretch
-                    }
-
-                    onCurrentIndexChanged: {
-                        switch (comboBoxVideoSize.currentIndex)
+                        enum VideoFillMode
                         {
-                        case 0:
-                            viewController.setVideoFillMode(tabBar.currentIndex, Constants.VideoFillMode.Cover)
-                            break;
-                        case 1:
-                            viewController.setVideoFillMode(tabBar.currentIndex, Constants.VideoFillMode.Contain)
-                            break;
-                        case 2:
-                            viewController.setVideoFillMode(tabBar.currentIndex, Constants.VideoFillMode.Stretch)
-                            break;
+                            Cover = 0, Contain, Stretch
                         }
-                    }
+
+                        onCurrentIndexChanged: {
+                            switch (comboBoxVideoSize.currentIndex)
+                            {
+                            case 0:
+                                viewController.setVideoFillMode(tabBar.currentIndex, Constants.VideoFillMode.Cover)
+                                break;
+                            case 1:
+                                viewController.setVideoFillMode(tabBar.currentIndex, Constants.VideoFillMode.Contain)
+                                break;
+                            case 2:
+                                viewController.setVideoFillMode(tabBar.currentIndex, Constants.VideoFillMode.Stretch)
+                                break;
+                            }
+                        }
                 }
 
                 CustomSlider {
@@ -270,7 +276,7 @@ ApplicationWindow {
                     }
                 }
 
-                CheckBox {
+                CustomCheckbox {
                     id: checkBoxVideoVolume
                     x: 317
                     y: 338
@@ -282,15 +288,15 @@ ApplicationWindow {
                     }
                 }
 
-                CheckBox {
+                CustomCheckbox {
                     id: checkBoxVideoOverlay
                     x: 317
                     y: 300
                     text: qsTr("VIDEO OVERLAY")
                     checked: false
                 }
-            }
         }
+    }
     }
 
     Label {
@@ -310,7 +316,7 @@ ApplicationWindow {
 
         TextField {
             id: textInputMusicPath
-            width: 242
+            width: 360
             height: 24
             placeholderText: qsTr("Choose your music")
             text: viewController.musicUrl
@@ -331,7 +337,7 @@ ApplicationWindow {
             }
         }
 
-        Button {
+        ColoredButton {
             id: buttonBrowseMusic
             width: 100
             height: 24
@@ -340,6 +346,12 @@ ApplicationWindow {
             onClicked: {
                 browseAudioDialog.open()
             }
+        }
+
+        // Spacer
+        Item {
+            width: 25
+            height: parent.height
         }
 
         ColoredButton {

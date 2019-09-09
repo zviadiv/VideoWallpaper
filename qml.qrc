@@ -27,5 +27,6 @@
         <file>CustomTabButton.qml</file>
         <file>ColoredButton.qml</file>
         <file>ScreenModeSwitch.qml</file>
+        <file>CustomCheckbox.qml</file>
     </qresource>
 </RCC>
