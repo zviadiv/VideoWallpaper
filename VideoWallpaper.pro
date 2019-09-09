@@ -38,7 +38,13 @@ SOURCES += \
 
 RESOURCES += qml.qrc
 
-RC_ICONS = appicon.ico
+win32 {
+    QMAKE_TARGET_PRODUCT     = Desktop Wallpaper
+    QMAKE_TARGET_DESCRIPTION = App that makes your desktop alive
+    QMAKE_TARGET_COMPANY     = mylivewallpapers.com
+    QMAKE_TARGET_COPYRIGHT   = Copyright © mylivewallpapers.com. All Rights Reserved.
+    RC_ICONS                 = appicon.ico
+}
 
 # Additional import path used to resolve QML modules in Qt Creator's code model
 QML_IMPORT_PATH =

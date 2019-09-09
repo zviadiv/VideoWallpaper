@@ -13,7 +13,7 @@ ApplicationWindow {
     minimumWidth: maximumWidth
     maximumHeight: 630
     minimumHeight: maximumHeight
-    title: qsTr("Video Wallpaper ") + Qt.application.version + qsTr(" (pre-alpha)")
+    title: qsTr("Video Wallpaper ") + Qt.application.version
     //flags: Qt.WindowStaysOnTopHint
 
     onClosing: {
@@ -115,9 +115,8 @@ ApplicationWindow {
         Repeater {
             model: Qt.application.screens
 
-            Rectangle {
+            Item {
                 id: tab
-                color: "red"
 
                 property string videoUrl
 
@@ -129,17 +128,6 @@ ApplicationWindow {
                     onAccepted: {
                         console.log("Video path: " + browseVideoDialog.fileUrls)
                         videoUrl = browseVideoDialog.fileUrls[0]
-                    }
-                }
-
-                FileDialog {
-                    id: browseAudioDialog
-                    title: "Please choose your audio"
-                    folder: shortcuts.home
-                    nameFilters: [ "Audio files (*.mp3 *.wav)", "All files (*)" ]
-                    onAccepted: {
-                        console.log("Audio path: " + browseAudioDialog.fileUrls)
-                        viewController.musicUrl = browseAudioDialog.fileUrls[0]
                     }
                 }
 
@@ -160,10 +148,9 @@ ApplicationWindow {
                     width: 593
                     height: 28
                     spacing: 5
+
                     TextField {
                         id: textInputVideoPath
-                        x: 56
-                        y: 0
                         width: 242
                         height: 24
                         placeholderText: qsTr("Choose your video")
@@ -176,8 +163,6 @@ ApplicationWindow {
 
                     Button {
                         id: buttonBrowseVideo
-                        x: 299
-                        y: 0
                         width: 100
                         height: 24
                         text: qsTr("BROWSE")
@@ -189,8 +174,6 @@ ApplicationWindow {
 
                     ColoredButton {
                         id: buttonApplyVideo
-                        x: 405
-                        y: 0
                         width: 80
                         height: 24
                         text: qsTr("APPLY")
@@ -198,7 +181,7 @@ ApplicationWindow {
                         highlighted: false
                         backgroundColor: "#ff8563"
                         textColor: "white"
-                        enabled: videoUrl.length != 0
+                        enabled: videoUrl.length !== 0
 
                         onClicked: {
                             viewController.playVideo(tabBar.currentIndex, videoUrl);
@@ -207,13 +190,11 @@ ApplicationWindow {
 
                     ColoredButton {
                         id: buttonRemoveVideo
-                        x: 511
-                        y: 0
                         width: 80
                         height: 24
                         text: qsTr("REMOVE")
                         anchors.right: root.right
-                        enabled: videoUrl.length != 0
+                        enabled: videoUrl.length !== 0
 
                         onClicked: {
                             viewController.removeVideo(tabBar.currentIndex)
@@ -314,68 +295,79 @@ ApplicationWindow {
 
     Label {
         id: label3
-        x: 42
+        x: 56
         y: 398
         text: qsTr("MUSIC SETTINGS")
         font.bold: true
     }
 
-    TextField {
-        id: textInputMusicPath
-        x: 41
+    Row {
+        x: 56
         y: 421
-        width: 242
-        height: 24
-        placeholderText: qsTr("Choose your music")
-        text: viewController.musicUrl
-        leftPadding: 5
-        padding: 0
-        font.pixelSize: 12
-        font.weight: Font.Thin
-    }
+        width: 593
+        height: 28
+        spacing: 5
 
-    Button {
-        id: buttonBrowseMusic
-        x: 284
-        y: 421
-        width: 100
-        height: 24
-        text: qsTr("BROWSE")
-
-        onClicked: {
-            browseAudioDialog.open()
+        TextField {
+            id: textInputMusicPath
+            width: 242
+            height: 24
+            placeholderText: qsTr("Choose your music")
+            text: viewController.musicUrl
+            leftPadding: 5
+            padding: 0
+            font.pixelSize: 12
+            font.weight: Font.Thin
         }
-    }
 
-    ColoredButton {
-        id: buttonApplyMusic
-        x: 390
-        y: 421
-        width: 80
-        height: 24
-        text: qsTr("APPLY")
-        highlighted: false
-        backgroundColor: "#ff8563"
-        textColor: "white"
-        spacing: 0
-        enabled: viewController.musicUrl.length != 0
-
-        onClicked: {
-            viewController.playMusic()
+        FileDialog {
+            id: browseAudioDialog
+            title: "Please choose your audio"
+            folder: shortcuts.home
+            nameFilters: [ "Audio files (*.mp3 *.wav)", "All files (*)" ]
+            onAccepted: {
+                console.log("Audio path: " + browseAudioDialog.fileUrls)
+                viewController.musicUrl = browseAudioDialog.fileUrls[0]
+            }
         }
-    }
 
-    ColoredButton {
-        id: buttonRemoveMusic
-        x: 496
-        y: 421
-        width: 80
-        height: 24
-        text: qsTr("REMOVE")
-        enabled: viewController.musicUrl.length != 0
+        Button {
+            id: buttonBrowseMusic
+            width: 100
+            height: 24
+            text: qsTr("BROWSE")
 
-        onClicked: {
-            viewController.removeMusic()
+            onClicked: {
+                browseAudioDialog.open()
+            }
+        }
+
+        ColoredButton {
+            id: buttonApplyMusic
+            width: 80
+            height: 24
+            text: qsTr("APPLY")
+            highlighted: false
+            backgroundColor: "#ff8563"
+            textColor: "white"
+            spacing: 0
+            enabled: viewController.musicUrl.length != 0
+
+            onClicked: {
+                viewController.playMusic()
+            }
+        }
+
+        ColoredButton {
+            id: buttonRemoveMusic
+            width: 80
+            height: 24
+            text: qsTr("REMOVE")
+            enabled: viewController.musicUrl.length != 0
+
+            onClicked: {
+                viewController.removeMusic()
+            }
         }
     }
 
@@ -401,15 +393,11 @@ ApplicationWindow {
 
     Rectangle {
         id: footerRectangle
-        y: 486
-        height: 74
+        height: 100
         color: "#495a94"
         anchors.right: parent.right
-        anchors.rightMargin: 0
         anchors.left: parent.left
-        anchors.leftMargin: 0
         anchors.bottom: parent.bottom
-        anchors.bottomMargin: 0
 
         ColoredButton {
             id: buttonRemoveWallpaper
@@ -417,11 +405,13 @@ ApplicationWindow {
             width: 139
             height: 33
             text: qsTr("REMOVE WALLPAPER")
+            backgroundColor: "#616faa"
+            textColor: "white"
             anchors.left: parent.left
             anchors.leftMargin: 20
+            anchors.verticalCenter: parent.verticalCenter
 
             onClicked: {
-                videoUrl = ""
                 viewController.musicUrl = ""
                 viewController.removeWallpaper()
             }
@@ -437,16 +427,28 @@ ApplicationWindow {
             enabled: true
             anchors.right: parent.right
             anchors.rightMargin: 24
+            anchors.verticalCenter: parent.verticalCenter
             backgroundColor: "#ff8563"
             textColor: "white"
         }
 
-        Label {
-            id: label5
-            x: 224
-            y: 24
-            color: "#ffffff"
-            text: qsTr("Copyright © mylivewallpapers.com. All Rights Reserved.")
+        Rectangle {
+            width: 300
+            height: 40
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: -20
+            color: "#616faa"
+            radius: 60
+
+            Label {
+                id: label5
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.top: parent.top
+                anchors.topMargin: 4
+                color: "#ffffff"
+                text: qsTr("Copyright © mylivewallpapers.com. All Rights Reserved.")
+            }
         }
     }
 }

@@ -82,6 +82,9 @@ void VideoWallpaperViewController::removeMusic()
 
 void VideoWallpaperViewController::removeWallpaper()
 {
-    //removeVideo();
+    for (int i = 0; i < QApplication::screens().size(); i++)
+    {
+        mDesktopPlayer->removeVideo(i);
+    }
     removeMusic();
 }

@@ -9,6 +9,19 @@
 
 #include <Windows.h>
 
+#define STRINGIZE2(s) #s
+#define STRINGIZE(s) STRINGIZE2(s)
+
+#define VERSION_MAJOR 0
+#define VERSION_MINOR 2
+#define VERSION_PATCH 0
+
+#define VER_FILE_VERSION VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH
+#define VER_FILE_VERSION_STR                                                                                                               \
+    "v" STRINGIZE(VERSION_MAJOR)                                                                                                               \
+    "." STRINGIZE(VERSION_MINOR) "." STRINGIZE(VERSION_PATCH)
+
+
 HANDLE Application::msMutex = nullptr;
 
 
@@ -16,10 +29,10 @@ Application::Application(int &argc, char **argv)
     : QApplication(argc, argv)
 {
     QCoreApplication::setApplicationName(QStringLiteral("Video Wallpaper"));
-    QApplication::setApplicationDisplayName(QStringLiteral("Video Wallpaper"));
-    QCoreApplication::setApplicationVersion(QStringLiteral("0.1"));
-    QCoreApplication::setOrganizationName(QStringLiteral("undefined"));
-    QCoreApplication::setOrganizationDomain(QStringLiteral("undefined"));
+    //QApplication::setApplicationDisplayName(QStringLiteral("Video Wallpaper"));
+    QCoreApplication::setApplicationVersion(QStringLiteral(VER_FILE_VERSION_STR) + "-alpha");
+    QCoreApplication::setOrganizationName(QStringLiteral("mylivewallpapers.com"));
+    QCoreApplication::setOrganizationDomain(QStringLiteral("mylivewallpapers.com"));
 
     checkCompatibility();
 

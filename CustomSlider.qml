@@ -13,6 +13,16 @@ Item {
         id: slider
         value: 0
 
+        handle: Rectangle {
+                x: slider.leftPadding + slider.visualPosition * (slider.availableWidth - width)
+                y: slider.topPadding + slider.availableHeight / 2 - height / 2
+                implicitWidth: 16
+                implicitHeight: 16
+                radius: 13
+                color: slider.pressed ? "#474d69" : "#676d89"
+                border.color: "#bdbebf"
+            }
+
         onValueChanged: {
             label.text = Math.floor(slider.value * 100)
             root.valueChanged()
