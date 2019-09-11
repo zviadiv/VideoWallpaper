@@ -18,4 +18,9 @@ QtObject {
     {
         None = 0, Black, White
     }
+
+    enum RendererQuality
+    {
+        Default = 0, Best, Fastest
+    }
 }

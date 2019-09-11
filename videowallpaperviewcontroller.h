@@ -45,6 +45,11 @@ public slots:
 
     void saveWallpaperAndClose();
 
+    void setVideoQuality(int quality);
+
+    bool autoStartEnabled() const;
+    void enableAutoStart(bool enable);
+
 private:
     DesktopVideoPlayer *mDesktopPlayer;
     QString mMusicUrl;

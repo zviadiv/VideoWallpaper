@@ -16,8 +16,8 @@ void SettingsManager::unregAutostart()
 {
     const QString key = QStringLiteral("HKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run");
     QSettings set(key, QSettings::NativeFormat);
-    if (set.contains(QStringLiteral("Video Wallpapear")))
-        set.remove(QStringLiteral("Dynamic Desktop"));
+    if (set.contains(QStringLiteral("Video Wallpaper")))
+        set.remove(QStringLiteral("Video Wallpaper"));
 }
 
 bool SettingsManager::regAutostart()
@@ -28,7 +28,7 @@ bool SettingsManager::regAutostart()
     if (set.status() != QSettings::NoError)
         return false;
     QString value = QLatin1Char('"') + QCoreApplication::applicationFilePath() + QLatin1Char('"');
-    set.setValue(QStringLiteral("Dynamic Desktop"), QDir::toNativeSeparators(value));
+    set.setValue(QStringLiteral("Video Wallpaper"), QDir::toNativeSeparators(value));
     return true;
 }
 

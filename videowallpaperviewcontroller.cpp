@@ -1,5 +1,6 @@
 #include "videowallpaperviewcontroller.h"
 #include "application.h"
+#include "settingsmanager.h"
 
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
@@ -108,4 +109,24 @@ void VideoWallpaperViewController::saveWallpaperAndClose()
 {
     if (Application::instance()->mainWindowVisible())
         Application::instance()->showMainWindow(false, false);
+}
+
+void VideoWallpaperViewController::setVideoQuality(int quality)
+{
+    mDesktopPlayer->setVideoQuality(static_cast<VideoQuality>(quality));
+}
+
+bool VideoWallpaperViewController::autoStartEnabled() const
+{
+    return SettingsManager::getInstance()->getAutostart();
+}
+
+void VideoWallpaperViewController::enableAutoStart(bool enable)
+{
+    if (enable)
+        SettingsManager::getInstance()->regAutostart();
+    else {
+        SettingsManager::getInstance()->unregAutostart();
+    }
+    SettingsManager::getInstance()->setAutostart(enable);
 }

@@ -111,14 +111,85 @@ ApplicationWindow {
         height: 216
         position: TabBar.Header
 
-        onCurrentIndexChanged: screens.currentIndex = tabBar.currentIndex
+        onCurrentIndexChanged: {
+            screens.currentIndex = tabBar.currentIndex
+            stackLayout.currentIndex = tabBar.currentIndex
+        }
         Component.onCompleted: {
             rebuildTabBar(false)
             currentIndex = 0
         }
     }
 
+    Drawer {
+        id: drawer
+        width: 0.25 * parent.width
+        height: parent.height
+        edge: Qt.RightEdge
+
+        Column {
+            anchors.centerIn: parent
+            spacing: 20
+
+            CustomCheckbox {
+                id: checkBoxAutoStart
+                x: 0
+                text: qsTr("Autostart")
+                checked: viewController.autoStartEnabled()
+
+                onCheckedChanged: viewController.enableAutoStart(checked)
+            }
+
+            ColumnLayout {
+                Label {
+                    text: "Renderer Quality:"
+                }
+                RadioButton {
+                    checked: true
+                    text: qsTr("Default")
+                    onCheckedChanged: {
+                        if (checked)
+                            viewController.setVideoQuality(Constants.RendererQuality.Default)
+                    }
+                }
+                RadioButton {
+                    text: qsTr("Best")
+                    onCheckedChanged: {
+                        if (checked)
+                            viewController.setVideoQuality(Constants.RendererQuality.Best)
+                    }
+                }
+                RadioButton {
+                    text: qsTr("Fastest")
+                    onCheckedChanged: {
+                        if (checked)
+                            viewController.setVideoQuality(Constants.RendererQuality.Fastest)
+                    }
+                }
+            }
+        }
+    }
+
+    ColoredButton {
+        id: buttonSettings
+        width: 100
+        height: 30
+        text: qsTr("SETTINGS")
+        enabled: true
+        anchors.top: tabBar.top
+        anchors.right: parent.right
+        anchors.rightMargin: 24
+        backgroundColor: "#495a94"
+        textColor: "white"
+
+        onClicked: {
+            drawer.visible = true
+        }
+    }
+
+
     StackLayout {
+        id: stackLayout
         y: 7
         anchors.rightMargin: 0
         anchors.bottomMargin: 168
@@ -383,8 +454,8 @@ ApplicationWindow {
                         }
                     }
                 }
+            }
         }
-    }
     }
 
     Label {

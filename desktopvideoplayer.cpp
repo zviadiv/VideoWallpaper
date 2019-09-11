@@ -5,6 +5,7 @@
 
 #include <QApplication>
 #include <QDesktopWidget>
+#include <QDesktopServices>
 #include <QMessageBox>
 #include <QSystemTrayIcon>
 #include <QDir>
@@ -154,16 +155,6 @@ DesktopVideoPlayer::DesktopVideoPlayer(QObject *parent)
                     mainWindow = newRenderer->widget();
                 }
             }
-        });
-    QObject::connect(&preferencesDialog, &PreferencesDialog::videoQualityChanged,
-        [=](const QString &quality)
-        {
-            if (quality == QStringLiteral("default"))
-                mRenderer->setQuality(QtAV::VideoRenderer::QualityDefault);
-            else if (quality == QStringLiteral("best"))
-                mRenderer->setQuality(QtAV::VideoRenderer::QualityBest);
-            else
-                mRenderer->setQuality(QtAV::VideoRenderer::QualityFastest);
         });
 
     if (!SettingsManager::getInstance()->getUrl().isEmpty())
@@ -315,6 +306,13 @@ void DesktopVideoPlayer::createSystemTrayMenu()
     QObject::connect(muteAction, &QAction::triggered, [this](bool checked)
     {
         muteAllPlayers(!checked);
+    });
+
+    mTrayMenu.addSeparator();
+    QAction *browseAction = mTrayMenu.addAction(QObject::tr("Browse Wallpapers"));
+    QObject::connect(browseAction, &QAction::triggered, []
+    {
+        QDesktopServices::openUrl(QUrl("http://mylivewallpapers.com"));
     });
 
     mTrayMenu.addSeparator();
@@ -602,4 +600,25 @@ void DesktopVideoPlayer::setOverlayOpacity(int screenIndex, double opacity)
 
 void DesktopVideoPlayer::setVideoOffset(int screenIndex, double offset)
 {
+}
+
+void DesktopVideoPlayer::setVideoQuality(VideoQuality quality)
+{
+    for (auto &renderer : mRenderers)
+    {
+        if (quality == VideoQuality::Default)
+            renderer->setQuality(QtAV::VideoRenderer::QualityDefault);
+        else if (quality == VideoQuality::Best)
+            renderer->setQuality(QtAV::VideoRenderer::QualityBest);
+        else
+            renderer->setQuality(QtAV::VideoRenderer::QualityFastest);
+    }
+
+    // Save to settings
+    QString qualityStr = "default";
+    if (quality == VideoQuality::Best)
+        qualityStr = "best";
+    else if (quality == VideoQuality::Fastest)
+        qualityStr = "fastest";
+    SettingsManager::getInstance()->setVideoQuality(qualityStr);
 }

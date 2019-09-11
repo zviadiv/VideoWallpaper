@@ -26,6 +26,11 @@ enum class ScreenMode
     Unique = 0, Shared, Copy
 };
 
+enum class VideoQuality
+{
+    Default = 0, Best, Fastest
+};
+
 class DesktopVideoPlayer : public QObject
 {
 public:
@@ -52,6 +57,7 @@ public:
     void setOverlayType(int screenIndex, OverlayFilter::OverlayType type);
     void setOverlayOpacity(int screenIndex, double opacity);
     void setVideoOffset(int screenIndex, double offset);
+    void setVideoQuality(VideoQuality quality);
 
 private:
     void setDefaultRenderers();
