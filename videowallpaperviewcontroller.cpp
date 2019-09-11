@@ -30,6 +30,18 @@ void VideoWallpaperViewController::setVideoFillMode(int screenIndex, int mode)
         mDesktopPlayer->setVideoFillMode(screenIndex, static_cast<VideoFillMode>(mode));
 }
 
+void VideoWallpaperViewController::setOverlayType(int screenIndex, int type)
+{
+    if (screenIndex >= 0)
+        mDesktopPlayer->setOverlayType(screenIndex, static_cast<OverlayFilter::OverlayType>(type));
+}
+
+void VideoWallpaperViewController::setOverlayOpacity(int screenIndex, double opacity)
+{
+    if (screenIndex >= 0)
+        mDesktopPlayer->setOverlayOpacity(screenIndex, opacity);
+}
+
 void VideoWallpaperViewController::setScreenMode(int mode)
 {
     mDesktopPlayer->setScreenMode(static_cast<ScreenMode>(mode));

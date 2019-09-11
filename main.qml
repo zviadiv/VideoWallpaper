@@ -208,6 +208,13 @@ ApplicationWindow {
                     }
                 }
 
+                /*Image {
+                    width: 16
+                    height: 16
+                    fillMode: Image.PreserveAspectFit
+                    source: "resources/icons/icon-video-size.svg"
+                }*/
+
                 Label {
                     id: label1
                     x: 56
@@ -262,8 +269,12 @@ ApplicationWindow {
 
                 CustomSlider {
                     id: sliderVideoOverlay
-                    slider { x: 444; y: 309; width: 144; height: 21; value: 0 }
+                    slider { x: 444; y: 309; width: 144; height: 21; value: 0.5 }
                     enabled: checkBoxVideoOverlay.checked
+
+                    onValueChanged: {
+                        viewController.setOverlayOpacity(tabBar.currentIndex, slider.value)
+                    }
                 }
 
                 CustomSlider {
@@ -294,6 +305,67 @@ ApplicationWindow {
                     y: 300
                     text: qsTr("VIDEO OVERLAY")
                     checked: false
+
+                    onCheckStateChanged: colorBoxes.setOverlayType()
+                }
+
+                Row {
+                    x: 620
+                    y: 309
+                    spacing: 4
+                    id: colorBoxes
+
+                    property int selectedItem: 0
+
+                    function setOverlayType()
+                    {
+                        var overlayType = selectedItem == 0 ? Constants.OverlayType.Black :
+                                                              Constants.OverlayType.White
+                        if (!checkBoxVideoOverlay.checked)
+                            overlayType = Constants.OverlayType.None
+                        viewController.setOverlayType(tabBar.currentIndex, overlayType)
+                    }
+
+                    Rectangle {
+                        width: 20
+                        height: 20
+                        color: "black"
+                        border.color: colorBoxes.selectedItem == 0 ? "red" : "gray"
+                        border.width: 1
+                        radius: 4
+
+                        MouseArea {
+                            id: blackArea
+                            anchors.fill: parent
+                            onClicked: {
+                                if (checkBoxVideoOverlay.checked)
+                                {
+                                    colorBoxes.selectedItem = 0
+                                    colorBoxes.setOverlayType()
+                                }
+                            }
+                        }
+                    }
+                    Rectangle {
+                        width: 20
+                        height: 20
+                        color: "white"
+                        border.color: colorBoxes.selectedItem == 1 ? "red" : "gray"
+                        border.width: 1
+                        radius: 4
+
+                        MouseArea {
+                            id: whiteArea
+                            anchors.fill: parent
+                            onClicked: {
+                                if (checkBoxVideoOverlay.checked)
+                                {
+                                    colorBoxes.selectedItem = 1
+                                    colorBoxes.setOverlayType()
+                                }
+                            }
+                        }
+                    }
                 }
         }
     }

@@ -13,4 +13,9 @@ QtObject {
     {
         Unique = 0, Shared, Copy
     }
+
+    enum OverlayType
+    {
+        None = 0, Black, White
+    }
 }

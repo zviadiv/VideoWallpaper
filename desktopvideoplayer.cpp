@@ -174,6 +174,13 @@ void DesktopVideoPlayer::createPlayers()
     {
         auto screen = QApplication::screens().at(i);
         auto renderer = createVideoRenderer(screen->geometry());
+
+        OverlayFilter *filter = new OverlayFilter(renderer->widget());
+        QtAV::VideoFilterContext *ctx = static_cast<QtAV::VideoFilterContext*>(filter->context());
+        ctx->rect = QRect(QPoint(0, 0), screen->size());
+        filter->prepare();
+        renderer->installFilter(filter);
+
         mRenderers.push_back(renderer);
 
         PlayerPtr player(new QtAV::AVPlayer());
@@ -422,7 +429,7 @@ void DesktopVideoPlayer::setVideoVolume(int screenIndex, double volume)
 
 void DesktopVideoPlayer::setMusicVolume(double volume)
 {
-    //setVideoVolume(volume);
+    setVideoVolume(0, volume);
 }
 
 bool DesktopVideoPlayer::getMute(int screenIndex) const
@@ -451,13 +458,13 @@ void DesktopVideoPlayer::setMute(int screenIndex, bool mute)
 
 void DesktopVideoPlayer::playMusic(const QString &url)
 {
-    //if (mPlayer->isLoaded() && mPlayer->audio())
-    //    mPlayer->setExternalAudio(url);
+    if (mPlayers[0]->isLoaded() && mPlayers[0]->audio())
+        mPlayers[0]->setExternalAudio(url);
 }
 
 void DesktopVideoPlayer::removeMusic()
 {
-    //mPlayer->setExternalAudio("");
+    mPlayers[0]->setExternalAudio("");
 }
 
 void DesktopVideoPlayer::setVideoFillMode(int screenIndex, VideoFillMode mode)
@@ -548,5 +555,25 @@ void DesktopVideoPlayer::setScreenMode(ScreenMode mode)
             if (mPlayers[i]->isLoaded() && mPlayers[i]->isPlaying())
                 mPlayers[i]->pause(true);
         }
+    }
+}
+
+void DesktopVideoPlayer::setOverlayType(int screenIndex, OverlayFilter::OverlayType type)
+{
+    auto filters = mRenderers[screenIndex]->filters();
+    OverlayFilter *overlayFilter = qobject_cast<OverlayFilter*>(filters[0]);
+    if (overlayFilter)
+    {
+        overlayFilter->setOverlayType(type);
+    }
+}
+
+void DesktopVideoPlayer::setOverlayOpacity(int screenIndex, double opacity)
+{
+    auto filters = mRenderers[screenIndex]->filters();
+    OverlayFilter *overlayFilter = qobject_cast<OverlayFilter*>(filters[0]);
+    if (overlayFilter)
+    {
+        overlayFilter->setOverlayOpacity(opacity);
     }
 }

@@ -1,6 +1,8 @@
 #ifndef DESKTOPVIDEOPLAYER_H
 #define DESKTOPVIDEOPLAYER_H
 
+#include "overlayfilter.h"
+
 #include <QObject>
 #include <QFileInfo>
 #include <QVersionNumber>
@@ -44,6 +46,8 @@ public:
 
     void setVideoFillMode(int screenIndex, VideoFillMode mode);
     void setScreenMode(ScreenMode mode);
+    void setOverlayType(int screenIndex, OverlayFilter::OverlayType type);
+    void setOverlayOpacity(int screenIndex, double opacity);
 
 private:
     void setDefaultRenderers();

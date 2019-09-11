@@ -32,6 +32,9 @@ public slots:
     void setMuteVideo(int screenIndex, bool mute);
     void setVideoFillMode(int screenIndex, int mode);
 
+    void setOverlayType(int screenIndex, int type);
+    void setOverlayOpacity(int screenIndex, double opacity);
+
     void setScreenMode(int mode);
 
     void playMusic();

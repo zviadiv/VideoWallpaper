@@ -32,6 +32,7 @@ SOURCES += \
         framelesswindow.cpp \
         main.cpp \
         application.cpp \
+        overlayfiler.cpp \
         preferencesdialog.cpp \
         settingsmanager.cpp \
         videowallpaperviewcontroller.cpp
@@ -63,6 +64,7 @@ HEADERS += \
     application.h \
     desktopvideoplayer.h \
     framelesswindow.h \
+    overlayfilter.h \
     preferencesdialog.h \
     settingsmanager.h \
     videowallpaperviewcontroller.h
