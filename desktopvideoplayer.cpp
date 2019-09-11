@@ -42,10 +42,24 @@ HWND getWorkerW(bool legacyMode = false)
     return legacyMode ? hwnd : HWORKERW;
 }
 
+QRect screenToWorker(const QRect rect)
+{
+    QPoint minOrigin;
+    auto screens = QApplication::screens();
+    for (int i = 0; i < screens.size(); i++)
+    {
+        auto origin = screens.at(i)->geometry().topLeft();
+        if (origin.x() < minOrigin.x())
+            minOrigin = origin;
+    }
+
+    return QRect(rect.x() - minOrigin.x(), rect.y() - minOrigin.y(),
+                 rect.width(), rect.height());
+}
 
 DesktopVideoPlayer::DesktopVideoPlayer(QObject *parent)
-    : QObject(parent)
-    , mWindowMode(true)
+    : QObject(parent),
+      mWindowMode(false)
 {
     int suffixIndex;
     mCurrentVersion = QVersionNumber::fromString(QSysInfo::kernelVersion(), &suffixIndex);
@@ -170,25 +184,7 @@ void DesktopVideoPlayer::createPlayers()
     mRenderers.clear();
     mPlayers.clear();
 
-    for (int i = 0; i < QApplication::screens().size(); i++)
-    {
-        auto screen = QApplication::screens().at(i);
-        auto renderer = createVideoRenderer(screen->geometry());
-
-        OverlayFilter *filter = new OverlayFilter(renderer->widget());
-        QtAV::VideoFilterContext *ctx = static_cast<QtAV::VideoFilterContext*>(filter->context());
-        ctx->rect = QRect(QPoint(0, 0), screen->size());
-        filter->prepare();
-        renderer->installFilter(filter);
-
-        mRenderers.push_back(renderer);
-
-        PlayerPtr player(new QtAV::AVPlayer());
-        player->setRenderer(renderer.get());
-        player->setRepeat(-1);
-        mPlayers.push_back(player);
-    }
-
+    HWND workerWindowHandle = nullptr;
     if (!mWindowMode)
     {
         QVersionNumber win10Version(10, 0, 10240); // Windows 10 Version 1507
@@ -201,9 +197,30 @@ void DesktopVideoPlayer::createPlayers()
         // also block our desktop icons, however using
         // "WorkerW" as our parent window will not result
         // in this problem, I don't know why. It's strange.
-        HWND hwnd = getWorkerW(mCurrentVersion < win10Version);
-        if (hwnd != nullptr)
-            SetParent(reinterpret_cast<HWND>(mPlayers[0]->renderer()->widget()->winId()), hwnd);
+        workerWindowHandle = getWorkerW(mCurrentVersion < win10Version);
+    }
+
+    for (int i = 0; i < QApplication::screens().size(); i++)
+    {
+        auto screen = QApplication::screens().at(i);
+        auto renderer = createVideoRenderer(screenToWorker(screen->geometry()));
+
+        OverlayFilter *filter = new OverlayFilter(renderer->widget());
+        QtAV::VideoFilterContext *ctx = static_cast<QtAV::VideoFilterContext*>(filter->context());
+        ctx->rect = QRect(QPoint(0, 0), screen->size());
+        filter->prepare();
+        renderer->installFilter(filter);
+
+        if (!mWindowMode && workerWindowHandle) {
+            SetParent(reinterpret_cast<HWND>(renderer->widget()->winId()), workerWindowHandle);
+        }
+
+        mRenderers.push_back(renderer);
+
+        PlayerPtr player(new QtAV::AVPlayer());
+        player->setRenderer(renderer.get());
+        player->setRepeat(-1);
+        mPlayers.push_back(player);
     }
 }
 
@@ -231,18 +248,18 @@ DesktopVideoPlayer::RendererPtr DesktopVideoPlayer::createVideoRenderer(const QR
         renderer->setQuality(QtAV::VideoRenderer::QualityFastest);
 
     QWidget *mainWindow = renderer->widget();
-    const Qt::WindowFlags rendererWindowFlags = Qt::FramelessWindowHint | /*Qt::WindowStaysOnTopHint |*/ Qt::WindowDoesNotAcceptFocus;
-    //if (!mWindowMode)
+    const Qt::WindowFlags rendererWindowFlags = Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint | Qt::WindowDoesNotAcceptFocus;
+    if (!mWindowMode)
     {
         mainWindow->setWindowFlags(rendererWindowFlags);
         // Why is Direct2D image too large?
         mainWindow->setGeometry(geometry);
     }
-    /*else
+    else
     {
         mainWindow->resize(QSize(1280, 720));
         moveToCenter(mainWindow);
-    }*/
+    }
     mainWindow->setWindowIcon(QIcon(QStringLiteral(":/appicon.ico")));
     mainWindow->setWindowTitle(QStringLiteral("Video Wallpaper"));
 
@@ -513,7 +530,7 @@ void DesktopVideoPlayer::setScreenMode(ScreenMode mode)
             auto widget = mPlayers[i]->renderer()->widget();
             bool loaded = mPlayers[i]->isLoaded();
             widget->setVisible(loaded);
-            widget->setGeometry(QApplication::screens().at(i)->geometry());
+            widget->setGeometry(screenToWorker(QApplication::screens().at(i)->geometry()));
 
             // Make sure the player is not paused
             if (loaded)
@@ -539,7 +556,7 @@ void DesktopVideoPlayer::setScreenMode(ScreenMode mode)
 
         auto geom = QApplication::screens().at(0)->virtualGeometry();
         qDebug() << "Updating player 0 widget geometry to " << geom;
-        mPlayers[0]->renderer()->widget()->setGeometry(geom);
+        mPlayers[0]->renderer()->widget()->setGeometry(screenToWorker(geom));
     }
     else if (mode == ScreenMode::Copy)
     {
@@ -548,7 +565,7 @@ void DesktopVideoPlayer::setScreenMode(ScreenMode mode)
         {
             auto widget = mPlayers[i]->renderer()->widget();
             widget->setVisible(i == 0 ? mPlayers[i]->isPlaying() : true);
-            widget->setGeometry(QApplication::screens().at(i)->geometry());
+            widget->setGeometry(screenToWorker(QApplication::screens().at(i)->geometry()));
         }
 
         // Add other screens' renderers as the output for main screen's player
