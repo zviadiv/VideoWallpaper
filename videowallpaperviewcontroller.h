@@ -35,11 +35,15 @@ public slots:
     void setOverlayType(int screenIndex, int type);
     void setOverlayOpacity(int screenIndex, double opacity);
 
+    void setVideoOffset(int screenIndex, double offset);
+
     void setScreenMode(int mode);
 
     void playMusic();
     void removeMusic();
     void removeWallpaper();
+
+    void saveWallpaperAndClose();
 
 private:
     DesktopVideoPlayer *mDesktopPlayer;

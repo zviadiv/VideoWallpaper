@@ -42,6 +42,12 @@ void VideoWallpaperViewController::setOverlayOpacity(int screenIndex, double opa
         mDesktopPlayer->setOverlayOpacity(screenIndex, opacity);
 }
 
+void VideoWallpaperViewController::setVideoOffset(int screenIndex, double offset)
+{
+    if (screenIndex >= 0)
+        mDesktopPlayer->setVideoOffset(screenIndex, offset);
+}
+
 void VideoWallpaperViewController::setScreenMode(int mode)
 {
     mDesktopPlayer->setScreenMode(static_cast<ScreenMode>(mode));
@@ -94,9 +100,12 @@ void VideoWallpaperViewController::removeMusic()
 
 void VideoWallpaperViewController::removeWallpaper()
 {
-    for (int i = 0; i < QApplication::screens().size(); i++)
-    {
-        mDesktopPlayer->removeVideo(i);
-    }
+    mDesktopPlayer->removeAllVideos();
     removeMusic();
+}
+
+void VideoWallpaperViewController::saveWallpaperAndClose()
+{
+    if (Application::instance()->mainWindowVisible())
+        Application::instance()->showMainWindow(false, false);
 }

@@ -2,7 +2,7 @@ import QtQuick 2.9
 import QtQuick.Window 2.2
 import QtQuick.Controls 2.2
 import QtQuick.Layouts 1.3
-import QtQuick.Dialogs 1.0
+import QtQuick.Dialogs 1.1
 
 ApplicationWindow {
     id:root
@@ -16,9 +16,21 @@ ApplicationWindow {
     title: qsTr("Video Wallpaper ") + Qt.application.version
     //flags: Qt.WindowStaysOnTopHint
 
+    /*MessageDialog {
+        id: messageDialog
+        title: "Video Wallpaper"
+        text: "Do you want to quit the application?"
+        icon: StandardIcon.Question
+        standardButtons: StandardButton.Yes | StandardButton.No
+        modality: Qt.ApplicationModal
+        onYes: {
+            Qt.quit()
+        }
+    }*/
+
     onClosing: {
-        console.log("Closing app window");
-        //root.close()
+        //hide()
+        //messageDialog.visible = true
     }
 
     Component {
@@ -264,7 +276,11 @@ ApplicationWindow {
 
                 CustomSlider {
                     id: sliderVideoPosition
-                    slider { x: 140; y: 347; width: 144; height: 21; value: 0 }
+                    slider { x: 140; y: 347; width: 144; height: 21; value: 0.5 }
+
+                    onValueChanged: {
+                        viewController.setVideoOffset(tabBar.currentIndex, slider.value)
+                    }
                 }
 
                 CustomSlider {
@@ -502,7 +518,7 @@ ApplicationWindow {
         }
 
         ColoredButton {
-            id: buttonSaveWallpaperAndExit
+            id: buttonSaveWallpaperAndClose
             x: 560
             y: 14
             width: 216
@@ -514,6 +530,8 @@ ApplicationWindow {
             anchors.verticalCenter: parent.verticalCenter
             backgroundColor: "#ff8563"
             textColor: "white"
+
+            onClicked: viewController.saveWallpaperAndClose()
         }
 
         Rectangle {

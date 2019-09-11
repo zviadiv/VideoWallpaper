@@ -6,6 +6,8 @@
 #include <QObject>
 #include <QFileInfo>
 #include <QVersionNumber>
+#include <QMenu>
+#include <QSystemTrayIcon>
 
 // Forward declare
 namespace QtAV
@@ -31,6 +33,7 @@ public:
     ~DesktopVideoPlayer();
 
     void removeVideo(int screenIndex);
+    void removeAllVideos();
     void playVideo(int screenIndex, const QString &url);
 
     double videoVolume(int screenIndex);
@@ -48,6 +51,7 @@ public:
     void setScreenMode(ScreenMode mode);
     void setOverlayType(int screenIndex, OverlayFilter::OverlayType type);
     void setOverlayOpacity(int screenIndex, double opacity);
+    void setVideoOffset(int screenIndex, double offset);
 
 private:
     void setDefaultRenderers();
@@ -69,6 +73,9 @@ private:
     bool mWindowMode = false;
 
     QVersionNumber mCurrentVersion;
+
+    QMenu mTrayMenu;
+    QSystemTrayIcon mTrayIcon;
 };
 
 #endif // DESKTOPVIDEOPLAYER_H

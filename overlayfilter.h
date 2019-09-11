@@ -33,7 +33,6 @@ protected:
 private:
     OverlayType mOverlayType;
     double mOverlayOpacity;
-    QMatrix4x4 mMat;
 };
 
 

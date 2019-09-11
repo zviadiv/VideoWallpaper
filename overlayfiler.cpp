@@ -27,18 +27,6 @@ void OverlayFilter::setOverlayOpacity(double opacity)
 
 void OverlayFilter::prepare()
 {
-    /*VideoFilterContext *ctx = static_cast<VideoFilterContext*>(context());
-    if (!mText.isEmpty()) {
-        ctx->font.setPixelSize(32);
-        ctx->font.setBold(true);
-        if (!mCanRot)
-            return;
-        mMat.translate(ctx->rect.center().x(), 0, 0);
-    } else if (!mImage.isNull()) {
-        if (!mCanRot)
-            return;
-        mMat.translate(ctx->rect.x() + mImage.width()/2, 0, 0);
-    }*/
 }
 
 void OverlayFilter::timerEvent(QTimerEvent *)
@@ -55,7 +43,6 @@ void OverlayFilter::process(Statistics *statistics, VideoFrame *frame)
         return;
 
     VideoFilterContext *ctx = static_cast<VideoFilterContext*>(context());
-    //ctx->transform = mMat.toTransform();
 
     if (mOverlayType != OverlayType::None)
     {

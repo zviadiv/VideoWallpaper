@@ -269,15 +269,13 @@ void DesktopVideoPlayer::muteAllPlayers(bool mute)
 
 void DesktopVideoPlayer::createSystemTrayMenu()
 {
-    QMenu trayMenu;
-
-    QAction *removeAction = trayMenu.addAction(QObject::tr("Remove Wallpaper"));
-    QObject::connect(removeAction, &QAction::triggered, []
+    QAction *removeAction = mTrayMenu.addAction(QObject::tr("Remove Wallpaper"));
+    QObject::connect(removeAction, &QAction::triggered, [this]
     {
-
+        removeAllVideos();
     });
 
-    QAction *changeAction = trayMenu.addAction(QObject::tr("Change Wallpaper"));
+    QAction *changeAction = mTrayMenu.addAction(QObject::tr("Change Wallpaper"));
     QObject::connect(changeAction, &QAction::triggered, []
     {
         if (!Application::instance()->mainWindowVisible())
@@ -286,8 +284,8 @@ void DesktopVideoPlayer::createSystemTrayMenu()
         }
     });
 
-    trayMenu.addSeparator();
-    QAction *playPauseAction = trayMenu.addAction(mPlayers[0]->isPlaying() ?
+    mTrayMenu.addSeparator();
+    QAction *playPauseAction = mTrayMenu.addAction(mPlayers[0]->isPlaying() ?
                 QObject::tr("Pause Wallpaper") : QObject::tr("Play Wallpaper"));
     QObject::connect(playPauseAction, &QAction::triggered, [this]
     {
@@ -295,27 +293,26 @@ void DesktopVideoPlayer::createSystemTrayMenu()
         pauseAllPlayers(pause);
     });
 
-    QAction *muteAction = trayMenu.addAction(QObject::tr("Mute Wallpaper"));
+    QAction *muteAction = mTrayMenu.addAction(QObject::tr("Mute Wallpaper"));
     muteAction->setCheckable(true);
     QObject::connect(muteAction, &QAction::triggered, [this](bool checked)
     {
         muteAllPlayers(!checked);
     });
 
-    trayMenu.addSeparator();
-    trayMenu.addAction(QObject::tr("Quit"), qApp, &QApplication::closeAllWindows);
+    mTrayMenu.addSeparator();
+    mTrayMenu.addAction(QObject::tr("Quit"), qApp, &QApplication::quit);
 
-    QSystemTrayIcon trayIcon;
-    trayIcon.setIcon(QIcon(QStringLiteral(":/appicon.ico")));
-    trayIcon.setToolTip(QStringLiteral("Video Wallpaper"));
-    trayIcon.setContextMenu(&trayMenu);
-    trayIcon.show();
-    QObject::connect(&trayIcon, &QSystemTrayIcon::activated,
-        [=](QSystemTrayIcon::ActivationReason reason)
-        {
-            if (reason != QSystemTrayIcon::Context)
-                changeAction->triggered();
-        });
+    mTrayIcon.setIcon(QIcon(QStringLiteral(":/appicon.ico")));
+    mTrayIcon.setToolTip(QStringLiteral("Video Wallpaper"));
+    mTrayIcon.setContextMenu(&mTrayMenu);
+    mTrayIcon.show();
+    QObject::connect(&mTrayIcon, &QSystemTrayIcon::activated,
+                     [=](QSystemTrayIcon::ActivationReason reason)
+    {
+        if (reason != QSystemTrayIcon::Context)
+            changeAction->triggered();
+    });
 }
 
 void DesktopVideoPlayer::moveToCenter(QWidget *window)
@@ -342,6 +339,14 @@ void DesktopVideoPlayer::removeVideo(int screenIndex)
     ShowWindow(HWORKERW, SW_HIDE);
 
     //setDefaultRenderer(screenIndex);
+}
+
+void DesktopVideoPlayer::removeAllVideos()
+{
+    for (int i = 0; i < QApplication::screens().size(); i++)
+    {
+        removeVideo(i);
+    }
 }
 
 void DesktopVideoPlayer::playVideo(int screenIndex, const QString &url)
@@ -476,7 +481,7 @@ void DesktopVideoPlayer::setVideoFillMode(int screenIndex, VideoFillMode mode)
         playerInst->renderer()->setOutAspectRatioMode(QtAV::VideoRenderer::VideoAspectRatio);
     else
     {
-        playerInst->renderer()->setOutAspectRatio(3.0);
+        //playerInst->renderer()->setOutAspectRatio(3.0);
     }
 }
 
@@ -576,4 +581,8 @@ void DesktopVideoPlayer::setOverlayOpacity(int screenIndex, double opacity)
     {
         overlayFilter->setOverlayOpacity(opacity);
     }
+}
+
+void DesktopVideoPlayer::setVideoOffset(int screenIndex, double offset)
+{
 }
