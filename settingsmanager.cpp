@@ -41,85 +41,6 @@ QStringList SettingsManager::defaultDecoders() const
             << QStringLiteral("FFmpeg");
 }
 
-QStringList SettingsManager::supportedMimeTypes() const
-{
-    return QStringList()
-            << QStringLiteral("audio/ac3")
-            << QStringLiteral("audio/eac3")
-            << QStringLiteral("audio/vnd.dolby.mlp")
-            << QStringLiteral("audio/vnd.dts")
-            << QStringLiteral("audio/vnd.dts.hd")
-            << QStringLiteral("audio/wav")
-            << QStringLiteral("audio/aiff")
-            << QStringLiteral("audio/amr")
-            << QStringLiteral("audio/amr-wb")
-            << QStringLiteral("audio/basic")
-            << QStringLiteral("audio/x-ape")
-            << QStringLiteral("audio/x-wavpack")
-            << QStringLiteral("audio/x-shorten")
-            << QStringLiteral("video/vnd.dlna.mpeg-tts")
-            << QStringLiteral("audio/vnd.dlna.adts")
-            << QStringLiteral("audio/mpeg")
-            << QStringLiteral("video/mpeg")
-            << QStringLiteral("video/dvd")
-            << QStringLiteral("video/mp4")
-            << QStringLiteral("audio/mp4")
-            << QStringLiteral("audio/aac")
-            << QStringLiteral("audio/flac")
-            << QStringLiteral("audio/ogg")
-            << QStringLiteral("video/ogg")
-            << QStringLiteral("application/ogg")
-            << QStringLiteral("video/x-matroska")
-            << QStringLiteral("audio/x-matroska")
-            << QStringLiteral("video/webm")
-            << QStringLiteral("audio/webm")
-            << QStringLiteral("video/avi")
-            << QStringLiteral("video/x-msvideo")
-            << QStringLiteral("video/flc")
-            << QStringLiteral("application/gxf")
-            << QStringLiteral("application/mxf")
-            << QStringLiteral("audio/x-ms-wma")
-            << QStringLiteral("video/x-ms-wm")
-            << QStringLiteral("video/x-ms-wmv")
-            << QStringLiteral("video/x-ms-asf")
-            << QStringLiteral("video/x-flv")
-            << QStringLiteral("video/mp4")
-            << QStringLiteral("audio/mp4")
-            << QStringLiteral("video/quicktime")
-            << QStringLiteral("application/vnd.rn-realmedia")
-            << QStringLiteral("application/vnd.rn-realmedia-vbr")
-            << QStringLiteral("audio/vnd.rn-realaudio")
-            << QStringLiteral("audio/3gpp")
-            << QStringLiteral("audio/3gpp2")
-            << QStringLiteral("video/3gpp")
-            << QStringLiteral("video/3gpp2")
-            << QStringLiteral("audio/x-mpegurl")
-            << QStringLiteral("audio/x-scpls");
-}
-
-QString SettingsManager::getUrl() const
-{
-    QString path = settings->value(QStringLiteral("vw/url"), QString()).toString();
-    if (QFileInfo(path).isDir())
-        return QString();
-    if (QFileInfo::exists(path))
-        return path;
-    QUrl url(path);
-    if (!url.isValid())
-        return QString();
-    if (url.isLocalFile())
-        return url.toLocalFile();
-    return QUrl::fromPercentEncoding(url.toEncoded());
-}
-
-QString SettingsManager::lastDir() const
-{
-    QString url = getUrl();
-    if (QFileInfo::exists(url))
-        return QFileInfo(url).dir().absolutePath();
-    return QStringLiteral(".");
-}
-
 bool SettingsManager::getMute() const
 {
     return settings->value(QStringLiteral("vw/mute"), false).toBool();
@@ -150,41 +71,6 @@ QStringList SettingsManager::getDecoders() const
     return settings->value(QStringLiteral("vw/decoders"), defaultDecoders()).toStringList();
 }
 
-bool SettingsManager::getFitDesktop() const
-{
-    return settings->value(QStringLiteral("vw/fit"), true).toBool();
-}
-
-bool SettingsManager::getSubtitle() const
-{
-    return settings->value(QStringLiteral("vw/subtitle"), true).toBool();
-}
-
-QString SettingsManager::getCharset() const
-{
-    return settings->value(QStringLiteral("vw/charset"), QStringLiteral("AutoDetect")).toString();
-}
-
-bool SettingsManager::getSubtitleAutoLoad() const
-{
-    return settings->value(QStringLiteral("vw/subtitleautoload"), true).toBool();
-}
-
-bool SettingsManager::getAudioAutoLoad() const
-{
-    return settings->value(QStringLiteral("vw/audioautoload"), true).toBool();
-}
-
-QString SettingsManager::getSkin() const
-{
-    return settings->value(QStringLiteral("vw/skin"), QStringLiteral("default")).toString();
-}
-
-QString SettingsManager::getLanguage() const
-{
-    return settings->value(QStringLiteral("vw/language"), QStringLiteral("auto")).toString();
-}
-
 QtAV::VideoRendererId SettingsManager::getRenderer() const
 {
     return settings->value(QStringLiteral("vw/renderer"), QtAV::VideoRendererId_GLWidget2).toInt();
@@ -193,11 +79,6 @@ QtAV::VideoRendererId SettingsManager::getRenderer() const
 QString SettingsManager::getVideoQuality() const
 {
     return settings->value(QStringLiteral("vw/quality"), QStringLiteral("fastest")).toString();
-}
-
-void SettingsManager::setUrl(const QString &url)
-{
-    settings->setValue(QStringLiteral("vw/url"), url);
 }
 
 void SettingsManager::setMute(bool mute)
@@ -226,41 +107,6 @@ void SettingsManager::setHwdec(bool enable)
 void SettingsManager::setDecoders(const QStringList &decoders)
 {
     settings->setValue(QStringLiteral("vw/decoders"), decoders);
-}
-
-void SettingsManager::setFitDesktop(bool fit)
-{
-    settings->setValue(QStringLiteral("vw/fit"), fit);
-}
-
-void SettingsManager::setSubtitle(bool show)
-{
-    settings->setValue(QStringLiteral("vw/subtitle"), show);
-}
-
-void SettingsManager::setCharset(const QString &charset)
-{
-    settings->setValue(QStringLiteral("vw/charset"), charset);
-}
-
-void SettingsManager::setSubtitleAutoLoad(bool autoload)
-{
-    settings->setValue(QStringLiteral("vw/subtitleautoload"), autoload);
-}
-
-void SettingsManager::setAudioAutoLoad(bool autoload)
-{
-    settings->setValue(QStringLiteral("vw/audioautoload"), autoload);
-}
-
-void SettingsManager::setSkin(const QString &skin)
-{
-    settings->setValue(QStringLiteral("vw/skin"), skin);
-}
-
-void SettingsManager::setLanguage(const QString &lang)
-{
-    settings->setValue(QStringLiteral("vw/language"), lang);
 }
 
 void SettingsManager::setRenderer(QtAV::VideoRendererId vid)

@@ -1,6 +1,5 @@
 #include "desktopvideoplayer.h"
 #include "settingsmanager.h"
-#include "preferencesdialog.h"
 #include "application.h"
 
 #include <QApplication>
@@ -74,94 +73,7 @@ DesktopVideoPlayer::DesktopVideoPlayer(QObject *parent)
 
     createPlayers();
 
-    createSystemTrayMenu();
-
-    /*PreferencesDialog preferencesDialog;
-
-    QObject::connect(&preferencesDialog, &PreferencesDialog::autostartChanged,
-        [=](bool enabled)
-        {
-            if (enabled)
-                SettingsManager::getInstance()->regAutostart();
-            else
-                SettingsManager::getInstance()->unregAutostart();
-        });
-    QObject::connect(&preferencesDialog, &PreferencesDialog::rendererChanged,
-        [=](QtAV::VideoRendererId rendererId) mutable
-        {
-            if (rendererId != mRenderer->id())
-            {
-                QtAV::VideoRenderer *newRenderer = QtAV::VideoRenderer::create(rendererId);
-                if (!newRenderer || !newRenderer->isAvailable() || !newRenderer->widget())
-                {
-                    QMessageBox::critical(nullptr, QStringLiteral("Video Wallpaper"), QObject::tr("Current renderer is not available on your platform!"));
-                    qApp->quit();
-                }
-                else
-                {
-                    if (!mWindowMode)
-                    {
-                        newRenderer->widget()->setWindowFlags(rendererWindowFlags);
-                        // Why is Direct2D image too large?
-                        newRenderer->widget()->setGeometry(screenGeometry);
-                    }
-                    else
-                    {
-                        newRenderer->widget()->resize(QSize(1280, 720));
-                        moveToCenter(newRenderer->widget());
-                    }
-                    newRenderer->widget()->setWindowIcon(QIcon(QStringLiteral(":/appicon.ico")));
-                    newRenderer->widget()->setWindowTitle(QStringLiteral("Dynamic Desktop"));
-                    mPlayer->setRenderer(newRenderer);
-                    const QtAV::VideoRendererId videoRendererId = newRenderer->id();
-                    if (videoRendererId == QtAV::VideoRendererId_GLWidget
-                                || videoRendererId == QtAV::VideoRendererId_GLWidget2
-                                || videoRendererId == QtAV::VideoRendererId_OpenGLWidget)
-                        newRenderer->forcePreferredPixelFormat(true);
-                    else
-                        newRenderer->forcePreferredPixelFormat(false);
-                    if (SettingsManager::getInstance()->getFitDesktop())
-                        newRenderer->setOutAspectRatioMode(QtAV::VideoRenderer::RendererAspectRatio);
-                    else
-                        newRenderer->setOutAspectRatioMode(QtAV::VideoRenderer::VideoAspectRatio);
-                    HWND hwnd = nullptr;
-                    if (mRenderer->widget())
-                    {
-                        newRenderer->widget()->setWindowTitle(mRenderer->widget()->windowTitle());
-                        if (mRenderer->widget()->geometry() != screenGeometry)
-                            newRenderer->widget()->setGeometry(mRenderer->widget()->geometry());
-                        if (newRenderer->widget()->isHidden())
-                            newRenderer->widget()->show();
-                        if (!mWindowMode)
-                            hwnd = GetParent(reinterpret_cast<HWND>(mRenderer->widget()->winId()));
-                        if (mRenderer->widget()->testAttribute(Qt::WA_DeleteOnClose))
-                            mRenderer->widget()->close();
-                        else
-                        {
-                            mRenderer->widget()->close();
-                            delete mRenderer->widget();
-                        }
-                    }
-                    else if (newRenderer->widget()->isHidden())
-                        newRenderer->widget()->show();
-                    if ((hwnd == nullptr) && !mWindowMode)
-                    {
-                        QVersionNumber win10Version(10, 0, 10240);
-                        hwnd = getWorkerW(mCurrentVersion < win10Version);
-                    }
-                    if ((hwnd != nullptr) && !mWindowMode)
-                        SetParent(reinterpret_cast<HWND>(newRenderer->widget()->winId()), hwnd);
-                    mRenderer = newRenderer;
-                    mainWindow = newRenderer->widget();
-                }
-            }
-        });
-
-    if (!SettingsManager::getInstance()->getUrl().isEmpty())
-    {
-        if (mainWindow->isHidden())
-            mainWindow->show();
-    }*/
+    createSystemTrayMenu();    
 }
 
 DesktopVideoPlayer::~DesktopVideoPlayer()
@@ -343,7 +255,6 @@ void DesktopVideoPlayer::moveToCenter(QWidget *window)
     window->move(newX, newY);
 }
 
-
 void DesktopVideoPlayer::removeVideo(int screenIndex)
 {
     auto &playerInst = mPlayers[screenIndex];
@@ -496,7 +407,7 @@ void DesktopVideoPlayer::setVideoFillMode(int screenIndex, VideoFillMode mode)
         playerInst->renderer()->setOutAspectRatioMode(QtAV::VideoRenderer::VideoAspectRatio);
     else
     {
-        //playerInst->renderer()->setOutAspectRatio(3.0);
+        // TODO: implement
     }
 }
 
@@ -600,6 +511,7 @@ void DesktopVideoPlayer::setOverlayOpacity(int screenIndex, double opacity)
 
 void DesktopVideoPlayer::setVideoOffset(int screenIndex, double offset)
 {
+
 }
 
 void DesktopVideoPlayer::setVideoQuality(VideoQuality quality)

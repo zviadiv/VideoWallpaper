@@ -29,11 +29,9 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
         desktopvideoplayer.cpp \
-        framelesswindow.cpp \
         main.cpp \
         application.cpp \
         overlayfiler.cpp \
-        preferencesdialog.cpp \
         settingsmanager.cpp \
         videowallpaperviewcontroller.cpp
 
@@ -63,14 +61,11 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 HEADERS += \
     application.h \
     desktopvideoplayer.h \
-    framelesswindow.h \
     overlayfilter.h \
-    preferencesdialog.h \
     settingsmanager.h \
     videowallpaperviewcontroller.h
 
-FORMS += \
-    preferencesdialog.ui
+FORMS +=
 
     libs.path = $$BIN_DIR
     libs.files = \
