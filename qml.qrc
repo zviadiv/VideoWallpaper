@@ -1,8 +1,5 @@
 <RCC>
     <qresource prefix="/">
-        <file>main.qml</file>
-        <file>CustomSlider.qml</file>
-        <file>Constants.qml</file>
         <file>resources/icons/icon-arrow-down.svg</file>
         <file>resources/icons/icon-settings.svg</file>
         <file>resources/icons/icon-video-overlay.svg</file>
@@ -12,8 +9,6 @@
         <file>resources/icons/screens-1.svg</file>
         <file>resources/icons/screens-2.svg</file>
         <file>resources/icons/screens-3.svg</file>
-        <file>AllScreens.qml</file>
-        <file>CustomButton.qml</file>
         <file>resources/icons/icon-video-size.png</file>
         <file>resources/icons/screens-1.png</file>
         <file>resources/icons/screens-2.png</file>
@@ -24,9 +19,14 @@
         <file>resources/icons/icon-video-position.png</file>
         <file>resources/icons/icon-video-volume.png</file>
         <file>appicon.ico</file>
-        <file>CustomTabButton.qml</file>
-        <file>ColoredButton.qml</file>
-        <file>ScreenModeSwitch.qml</file>
-        <file>CustomCheckbox.qml</file>
+        <file>qml/main.qml</file>
+        <file>qml/CustomSlider.qml</file>
+        <file>qml/Constants.qml</file>
+        <file>qml/CustomTabButton.qml</file>
+        <file>qml/ColoredButton.qml</file>
+        <file>qml/ScreenModeSwitch.qml</file>
+        <file>qml/CustomCheckbox.qml</file>
+        <file>qml/AllScreens.qml</file>
+        <file>qml/CustomButton.qml</file>
     </qresource>
 </RCC>

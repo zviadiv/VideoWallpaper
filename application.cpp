@@ -38,7 +38,7 @@ Application::Application(int &argc, char **argv)
 
     mQmlEngine = new QQmlApplicationEngine(this);
 
-    const QUrl url(QStringLiteral("qrc:/main.qml"));
+    const QUrl url(QStringLiteral("qrc:/qml/main.qml"));
     QObject::connect(mQmlEngine, &QQmlApplicationEngine::objectCreated,
                      this, [url](QObject *obj, const QUrl &objUrl) {
         if (!obj && url == objUrl)
